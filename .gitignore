@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+build/
+*.local
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Uploads (runtime)
+BACKEND_BODYES/uploads/*
+!BACKEND_BODYES/uploads/.gitkeep
