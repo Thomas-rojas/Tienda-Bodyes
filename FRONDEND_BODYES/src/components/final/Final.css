@@ -126,11 +126,38 @@
   border: 1px solid rgba(122, 74, 58, 0.35);
   border-radius: 0.4rem;
   color: var(--color-terracotta);
-  transition: background 0.25s var(--ease-out);
+  transition: background 0.25s var(--ease-out), transform 0.25s var(--ease-out);
 }
 
 .final__social-btn:hover {
   background: rgba(122, 74, 58, 0.06);
+  transform: translateY(-1px);
+}
+
+.final__social-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.85rem;
+  background: #6b3fa0;
+  color: #fff;
+}
+
+.final__social-bar-link {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  color: #fff;
+  transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out);
+}
+
+.final__social-bar-link:hover {
+  transform: translateY(-2px) scale(1.06);
+  opacity: 0.9;
 }
 
 .final__col-title {

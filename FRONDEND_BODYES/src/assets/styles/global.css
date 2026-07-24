@@ -24,11 +24,12 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
   margin: 0;
+  padding-top: var(--nav-height);
   font-family: var(--font-body);
   color: var(--color-ink);
   background: var(--color-surface);
@@ -50,4 +51,8 @@ button {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+section[id] {
+  scroll-margin-top: calc(var(--nav-height) + 0.75rem);
 }

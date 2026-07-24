@@ -63,7 +63,7 @@ const features = [
 
 function Historia() {
   return (
-    <section className="historia" aria-labelledby="historia-title">
+    <section id="historia" className="historia" aria-labelledby="historia-title">
       <div className="historia__inner">
         <h2 id="historia-title" className="historia__title">
           ¿POR QUÉ CLIO?

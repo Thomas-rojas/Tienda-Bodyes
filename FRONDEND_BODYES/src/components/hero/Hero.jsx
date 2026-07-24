@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom'
 import './Hero.css'
 
 function Hero() {
   return (
-    <section className="hero" aria-label="Hero CLIO">
+    <section id="inicio" className="hero" aria-label="Hero CLIO">
       <div className="hero__stage">
         <img
           className="hero__image"
@@ -21,9 +22,9 @@ function Hero() {
               la suavidad de nuestra tela premium que se siente como una segunda
               piel.
             </p>
-            <a className="hero__cta" href="/catalogo">
+            <Link className="hero__cta" to="/catalogo">
               VER COLECCIÓN
-            </a>
+            </Link>
           </div>
         </div>
       </div>

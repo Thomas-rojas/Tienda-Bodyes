@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom'
 import './Final.css'
 
 function Final() {
   return (
-    <section className="final" aria-label="Cierre CLIO">
+    <section id="comprar" className="final" aria-label="Cierre CLIO">
       <div className="final__inner">
         <div className="final__banner">
           <img
@@ -17,32 +18,77 @@ function Final() {
               Únete a la revolución de la comodidad y el estilo. Encuentra tu
               talla perfecta hoy.
             </p>
-            <a className="final__banner-cta" href="/catalogo">
+            <Link className="final__banner-cta" to="/catalogo">
               COMPRAR AHORA
-            </a>
+            </Link>
           </div>
         </div>
 
-        <footer className="final__footer">
+        <div className="final__social-bar" aria-label="Redes sociales CLIO">
+          <a
+            className="final__social-bar-link"
+            href="https://www.instagram.com/clioofficial.co?igsh=eTJib3kxdWo2ZjZ3"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram de CLIO"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5" stroke="currentColor" strokeWidth="1.7" />
+              <circle cx="12" cy="12" r="4.1" stroke="currentColor" strokeWidth="1.7" />
+              <circle cx="17.3" cy="6.7" r="1.15" fill="currentColor" />
+            </svg>
+          </a>
+          <a
+            className="final__social-bar-link"
+            href="https://www.tiktok.com/@cliooficial.co?_r=1&_t=ZS-98I5UabDAAP"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="TikTok de CLIO"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M14.2 3.5c.6 2.3 2.1 3.9 4.3 4.4v2.5c-1.5-.1-2.9-.6-4.1-1.5v5.8c0 3.2-2.5 5.8-5.7 5.8S3 17.9 3 14.7c0-3.1 2.4-5.6 5.5-5.8v2.6c-1.5.2-2.6 1.4-2.6 3 0 1.7 1.3 3 3 3s3-1.3 3-3V3.5h2.3Z"
+                fill="currentColor"
+              />
+            </svg>
+          </a>
+        </div>
+
+        <footer id="contacto" className="final__footer">
           <div className="final__brand">
-            <a className="final__logo" href="/">
+            <Link className="final__logo" to="/">
               CLIO
-            </a>
+            </Link>
             <p className="final__brand-text">
               Elevando lo cotidiano a través del diseño consciente y la calidad
               excepcional. El arte de vestir tu cuerpo.
             </p>
             <div className="final__social">
-              <a className="final__social-btn" href="#" aria-label="Código QR">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 3h3v4h-3v-4Zm4-3h3v3h-3v-3Zm0 4h3v3h-3v-3Z" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-              </a>
-              <a className="final__social-btn" href="#" aria-label="Instagram">
+              <a
+                className="final__social-btn"
+                href="https://www.instagram.com/clioofficial.co?igsh=eTJib3kxdWo2ZjZ3"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram de CLIO"
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" strokeWidth="1.5" />
                   <circle cx="12" cy="12" r="3.8" stroke="currentColor" strokeWidth="1.5" />
                   <circle cx="17.2" cy="6.8" r="1" fill="currentColor" />
+                </svg>
+              </a>
+              <a
+                className="final__social-btn"
+                href="https://www.tiktok.com/@cliooficial.co?_r=1&_t=ZS-98I5UabDAAP"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok de CLIO"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M14.2 3.5c.6 2.3 2.1 3.9 4.3 4.4v2.5c-1.5-.1-2.9-.6-4.1-1.5v5.8c0 3.2-2.5 5.8-5.7 5.8S3 17.9 3 14.7c0-3.1 2.4-5.6 5.5-5.8v2.6c-1.5.2-2.6 1.4-2.6 3 0 1.7 1.3 3 3 3s3-1.3 3-3V3.5h2.3Z"
+                    fill="currentColor"
+                  />
                 </svg>
               </a>
             </div>
@@ -51,9 +97,9 @@ function Final() {
           <div className="final__col">
             <h3 className="final__col-title">TIENDA</h3>
             <ul className="final__links">
-              <li><a href="/catalogo">Colección</a></li>
-              <li><a href="/catalogo">Best Sellers</a></li>
-              <li><a href="/catalogo">Nuevos Ingresos</a></li>
+              <li><Link to="/catalogo">Colección</Link></li>
+              <li><Link to="/catalogo">Best Sellers</Link></li>
+              <li><Link to="/catalogo">Nuevos Ingresos</Link></li>
             </ul>
           </div>
 
