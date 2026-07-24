@@ -148,6 +148,12 @@
   color: var(--color-terracotta);
 }
 
+.catalog__stock {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
 .catalog__add {
   padding: 0;
   background: transparent;
@@ -159,6 +165,12 @@
   text-decoration: underline;
   text-underline-offset: 0.22em;
   transition: color 0.25s var(--ease-out);
+}
+
+.catalog__add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: none;
 }
 
 .catalog__add:hover {

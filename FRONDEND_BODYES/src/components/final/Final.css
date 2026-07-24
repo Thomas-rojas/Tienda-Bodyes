@@ -142,8 +142,9 @@
   margin-top: 2rem;
   padding: 1rem 1.25rem;
   border-radius: 0.85rem;
-  background: #6b3fa0;
-  color: #fff;
+  background: var(--color-cream-deep);
+  border: 1px solid rgba(122, 74, 58, 0.12);
+  color: var(--color-terracotta);
 }
 
 .final__social-bar-link {
@@ -151,13 +152,15 @@
   place-items: center;
   width: 2.6rem;
   height: 2.6rem;
-  color: #fff;
-  transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out);
+  color: var(--color-terracotta);
+  border-radius: 0.5rem;
+  transition: transform 0.25s var(--ease-out), background 0.25s var(--ease-out), color 0.25s var(--ease-out);
 }
 
 .final__social-bar-link:hover {
-  transform: translateY(-2px) scale(1.06);
-  opacity: 0.9;
+  transform: translateY(-2px);
+  background: rgba(244, 180, 196, 0.22);
+  color: var(--color-terracotta-hover);
 }
 
 .final__col-title {

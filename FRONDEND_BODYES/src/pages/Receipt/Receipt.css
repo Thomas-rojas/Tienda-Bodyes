@@ -1,0 +1,124 @@
+.receipt-page {
+  min-height: calc(100svh - var(--nav-height));
+  background:
+    linear-gradient(180deg, rgba(255, 236, 228, 0.55), transparent 28%),
+    var(--color-surface);
+  padding: 2.5rem 0 4rem;
+}
+
+.receipt-page__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.receipt-page__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.18em;
+  color: var(--color-terracotta);
+}
+
+.receipt-page__header h1 {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.5vw, 2.4rem);
+  font-weight: 600;
+}
+
+.receipt-page__header p {
+  margin: 0.65rem 0 0;
+  color: var(--color-muted);
+}
+
+.receipt-page__block {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.receipt-page__block h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.receipt-page__block p {
+  margin: 0.25rem 0;
+  color: var(--color-ink);
+  font-weight: 300;
+}
+
+.receipt-page__block ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.receipt-page__block li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.receipt-page__total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 1.15rem;
+}
+
+.receipt-page__meta {
+  margin-top: 0.55rem !important;
+  color: var(--color-muted) !important;
+  font-size: 0.88rem;
+}
+
+.receipt-page__note {
+  margin-top: 1.25rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.receipt-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1.75rem;
+}
+
+.receipt-page__print {
+  padding: 0.9rem 1.25rem;
+  border-radius: 0.45rem;
+  background: var(--color-terracotta);
+  color: #fff;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.receipt-page__missing h1 {
+  font-family: var(--font-display);
+}
+
+@media print {
+  .navbar,
+  .social-bar,
+  .receipt-page__actions {
+    display: none !important;
+  }
+
+  .receipt-page {
+    background: #fff;
+    min-height: auto;
+    padding: 0;
+  }
+}

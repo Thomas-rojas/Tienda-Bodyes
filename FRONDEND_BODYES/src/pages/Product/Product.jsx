@@ -1,19 +1,49 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../../components/navbar/Navbar'
 import { useCart } from '../../context/CartContext'
 import { getProductById } from '../../constants/products'
+import { fetchProduct } from '../../services/api'
 import './Product.css'
 
 function Product() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const product = getProductById(id)
+  const [product, setProduct] = useState(() => getProductById(id) || null)
+  const [loading, setLoading] = useState(!getProductById(id))
 
   useEffect(() => {
     window.scrollTo(0, 0)
+    let cancelled = false
+    setLoading(true)
+    fetchProduct(id)
+      .then((data) => {
+        if (!cancelled && data?.product) setProduct(data.product)
+      })
+      .catch(() => {
+        if (!cancelled) setProduct(getProductById(id) || null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [id])
+
+  if (loading && !product) {
+    return (
+      <>
+        <Navbar />
+        <main className="product-page">
+          <div className="product-page__inner">
+            <p>Cargando producto…</p>
+          </div>
+        </main>
+      </>
+    )
+  }
 
   if (!product) {
     return (
@@ -28,6 +58,8 @@ function Product() {
       </>
     )
   }
+
+  const outOfStock = product.stock === 0
 
   return (
     <>
@@ -76,6 +108,7 @@ function Product() {
                 <button
                   className="product-page__add"
                   type="button"
+                  disabled={outOfStock}
                   onClick={() => addItem(product)}
                 >
                   Añadir a carrito
@@ -83,6 +116,7 @@ function Product() {
                 <button
                   className="product-page__pay"
                   type="button"
+                  disabled={outOfStock}
                   onClick={() => {
                     addItem(product)
                     navigate('/pagar')
@@ -94,6 +128,9 @@ function Product() {
 
               <p className="product-page__note">
                 Soft · Cruelty free · Conscious
+                {typeof product.stock === 'number'
+                  ? ` · ${outOfStock ? 'Agotado' : `${product.stock} en stock`}`
+                  : ''}
               </p>
             </div>
           </div>

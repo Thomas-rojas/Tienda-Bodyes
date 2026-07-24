@@ -58,7 +58,8 @@
 }
 
 .checkout-page__form input,
-.checkout-page__form textarea {
+.checkout-page__form textarea,
+.checkout-page__form select {
   width: 100%;
   border: 1px solid rgba(122, 74, 58, 0.18);
   border-radius: 0.45rem;
@@ -70,8 +71,106 @@
 }
 
 .checkout-page__form input:focus,
-.checkout-page__form textarea:focus {
+.checkout-page__form textarea:focus,
+.checkout-page__form select:focus {
   border-color: rgba(122, 74, 58, 0.45);
+}
+
+.checkout-page__form input[aria-invalid='true'],
+.checkout-page__form textarea[aria-invalid='true'],
+.checkout-page__form select[aria-invalid='true'] {
+  border-color: rgba(155, 59, 59, 0.55);
+}
+
+.checkout-page__row {
+  display: grid;
+  gap: 1rem;
+}
+
+.checkout-page__field-error,
+.checkout-page__error {
+  color: #9b3b3b;
+  font-size: 0.8rem;
+}
+
+.checkout-page__error {
+  margin: 0;
+}
+
+.checkout-page__security,
+.checkout-page__methods {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.checkout-page__methods-field {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.checkout-page__methods-field legend {
+  padding: 0;
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.checkout-page__methods-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.checkout-page__method {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(122, 74, 58, 0.18);
+  border-radius: 0.45rem;
+  background: #fffaf7;
+  cursor: pointer;
+}
+
+.checkout-page__method.is-selected {
+  border-color: var(--color-terracotta);
+  background: rgba(196, 120, 100, 0.08);
+}
+
+.checkout-page__method input {
+  margin-top: 0.15rem;
+  accent-color: var(--color-terracotta);
+}
+
+.checkout-page__method strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.checkout-page__method em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  font-weight: 300;
+}
+
+.checkout-page__pay:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (min-width: 640px) {
+  .checkout-page__row {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .checkout-page__pay,

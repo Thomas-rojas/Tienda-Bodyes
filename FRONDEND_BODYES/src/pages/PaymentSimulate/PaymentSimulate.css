@@ -1,0 +1,305 @@
+/* Estilo tipo Nike checkout: acordeón limpio, filas de método, CTA full-width */
+
+.nike-pay {
+  min-height: calc(100svh - var(--nav-height));
+  background: #fff;
+  padding: 1.5rem 0 4rem;
+}
+
+.nike-pay__shell {
+  width: min(560px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.nike-pay__header {
+  margin-bottom: 1.75rem;
+}
+
+.nike-pay__step {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.nike-pay__header h1 {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-body);
+  font-size: clamp(1.55rem, 4vw, 1.85rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+
+.nike-pay__ref {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: var(--color-muted);
+  font-weight: 300;
+}
+
+.nike-pay__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.nike-pay__accordion {
+  border-top: 1px solid #e5e5e5;
+}
+
+.nike-pay__item {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.nike-pay__trigger {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 1.15rem 0.15rem;
+  text-align: left;
+  background: transparent;
+  transition: background 0.2s var(--ease-out);
+}
+
+.nike-pay__trigger:hover {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.nike-pay__radio {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid #757575;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.nike-pay__item.is-open .nike-pay__radio {
+  border-color: var(--color-ink);
+}
+
+.nike-pay__item.is-open .nike-pay__radio::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--color-ink);
+}
+
+.nike-pay__title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.nike-pay__brands {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nike-pay__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  height: 1.45rem;
+  padding: 0 0.35rem;
+  border-radius: 0.2rem;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #111;
+}
+
+.nike-pay__brand--visa {
+  color: #1a1f71;
+}
+
+.nike-pay__brand--amex {
+  background: #2e77bb;
+  border-color: #2e77bb;
+  color: #fff;
+  font-size: 0.52rem;
+}
+
+.nike-pay__brand--mc {
+  gap: 0;
+  min-width: 2.1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.nike-pay__brand--mc i {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+}
+
+.nike-pay__brand--mc i:first-child {
+  background: #eb001b;
+  margin-right: -0.28rem;
+}
+
+.nike-pay__brand--mc i:last-child {
+  background: #f79e1b;
+  opacity: 0.92;
+}
+
+.nike-pay__brand--pse {
+  color: #0b5cab;
+}
+
+.nike-pay__brand--nequi {
+  min-width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+  border-radius: 0;
+}
+
+.nike-pay__brand--nequi img {
+  display: block;
+  width: 2.35rem;
+  height: 2.35rem;
+  object-fit: contain;
+}
+
+.nike-pay__panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 0 1.25rem 2.2rem;
+  animation: nikePayIn 0.28s var(--ease-out);
+}
+
+.nike-pay__panel-label {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--color-muted);
+  font-weight: 300;
+}
+
+.nike-pay__field input,
+.nike-pay__field select {
+  width: 100%;
+  height: 3.35rem;
+  padding: 0 0.9rem;
+  border: 1px solid #757575;
+  border-radius: 0.35rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.nike-pay__field input:focus,
+.nike-pay__field select:focus {
+  border-color: var(--color-ink);
+  border-width: 1.5px;
+}
+
+.nike-pay__field input[aria-invalid='true'],
+.nike-pay__field select[aria-invalid='true'] {
+  border-color: #d43c18;
+}
+
+.nike-pay__field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.nike-pay__error {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #d43c18;
+}
+
+.nike-pay__banner {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: #fff5f2;
+  color: #d43c18;
+  font-size: 0.9rem;
+  border-radius: 0.35rem;
+}
+
+.nike-pay__cta {
+  width: 100%;
+  height: 3.5rem;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 1.85rem;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition:
+    background 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out);
+}
+
+.nike-pay__cta:hover:not(:disabled) {
+  background: #000;
+  transform: scale(1.01);
+}
+
+.nike-pay__cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.nike-pay__secure {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  font-weight: 300;
+}
+
+.nike-pay__back {
+  display: inline-block;
+  margin-top: 0.35rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+@keyframes nikePayIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .nike-pay__brands {
+    display: none;
+  }
+
+  .nike-pay__panel {
+    padding-left: 0.1rem;
+  }
+
+  .nike-pay__trigger {
+    grid-template-columns: auto 1fr;
+  }
+}

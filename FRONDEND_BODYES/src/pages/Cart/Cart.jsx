@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/navbar/Navbar'
 import { useCart } from '../../context/CartContext'
+import { formatCop } from '../../constants/products'
 import './Cart.css'
-
-function formatMoney(value) {
-  return `$${value.toFixed(2)}`
-}
 
 function Cart() {
   const { items, addItem, decreaseItem, removeItem, clearCart, totalItems, totalPrice } =
@@ -81,7 +78,7 @@ function Cart() {
               <div className="cart-page__summary">
                 <div className="cart-page__total">
                   <span>Total</span>
-                  <strong>{formatMoney(totalPrice)}</strong>
+                  <strong>{formatCop(totalPrice)}</strong>
                 </div>
                 <div className="cart-page__summary-actions">
                   <Link className="cart-page__pay" to="/pagar">

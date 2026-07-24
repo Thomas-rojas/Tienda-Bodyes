@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Navbar from '../../components/navbar/Navbar'
 import Final from '../../components/final/Final'
 import { useCart } from '../../context/CartContext'
 import { catalogProducts } from '../../constants/products'
+import { fetchProducts } from '../../services/api'
 import './Catalog.css'
 
 function ProductGrid({ products }) {
@@ -21,10 +22,16 @@ function ProductGrid({ products }) {
               <div>
                 <h3 className="catalog__name">{product.name}</h3>
                 <p className="catalog__price">{product.price}</p>
+                {typeof product.stock === 'number' && (
+                  <p className="catalog__stock">
+                    {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+                  </p>
+                )}
               </div>
               <button
                 className="catalog__add"
                 type="button"
+                disabled={product.stock === 0}
                 onClick={() => addItem(product)}
               >
                 Añadir a carrito
@@ -39,10 +46,25 @@ function ProductGrid({ products }) {
 
 function Catalog() {
   const location = useLocation()
+  const [products, setProducts] = useState(catalogProducts)
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [location.pathname])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchProducts()
+      .then((data) => {
+        if (!cancelled && data?.products?.length) setProducts(data.products)
+      })
+      .catch(() => {
+        /* fallback a constants */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <>
@@ -65,7 +87,7 @@ function Catalog() {
               <h2 id="catalog-title">Colección</h2>
               <p>Bodies esenciales con ajuste suave y tela inteligente.</p>
             </div>
-            <ProductGrid products={catalogProducts} />
+            <ProductGrid products={products} />
           </div>
         </section>
 
