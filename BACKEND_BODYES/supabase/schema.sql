@@ -167,28 +167,28 @@ insert into public.products (
   color, material, fit, size, description
 ) values
   (
-    'm1', 'clio-essential-nude', 'Clio Essential Nude', 'mujeres', 14000000, 20,
-    '/images/catalog-mujer-1.jpg', 'Clio Essential Nude para mujeres',
+    'm1', 'clio-basico-essential-nude', 'Clio Básico Essential Nude', 'mujeres', 14000000, 20,
+    '/images/catalog-mujer-1.jpg', 'Clio Básico Essential Nude para mujeres',
     'Nude beige', 'Tela premium stretch, transpirable', 'Ajuste moldeador suave', 'Talla única',
-    'Body esencial en tono nude que se siente como una segunda piel. Ideal para usar solo o como base de cualquier outfit.'
+    'Body básico esencial en tono nude que se siente como una segunda piel. Ideal para usar solo o como base de cualquier outfit.'
   ),
   (
-    'm2', 'clio-terracota-soft', 'Clio Terracota Soft', 'mujeres', 16800000, 20,
-    '/images/catalog-mujer-2.jpg', 'Clio Terracota Soft para mujeres',
+    'm2', 'clio-basico-terracota-soft', 'Clio Básico Terracota Soft', 'mujeres', 16800000, 20,
+    '/images/catalog-mujer-2.jpg', 'Clio Básico Terracota Soft para mujeres',
     'Terracota', 'Algodón suave con elastano', 'Manga larga, silueta definida', 'Talla única',
-    'Pieza cálida en terracota con manga larga. Combina comodidad diaria con un acabado elegante y conscious.'
+    'Pieza básica cálida en terracota con manga larga. Combina comodidad diaria con un acabado elegante y conscious.'
   ),
   (
-    'm3', 'clio-rib-verde', 'Clio Rib Verde', 'mujeres', 12800000, 20,
-    '/images/catalog-mujer-3.jpg', 'Clio Rib Verde para mujeres',
+    'm3', 'clio-basico-rib-verde', 'Clio Básico Rib Verde', 'mujeres', 12800000, 20,
+    '/images/catalog-mujer-3.jpg', 'Clio Básico Rib Verde para mujeres',
     'Verde oliva', 'Rib stretch ligero', 'Sin mangas, corte confort', 'Talla única',
-    'Body rib en verde oliva, fresco y versátil. Perfecto para el día a día sin sacrificar estilo.'
+    'Body básico rib en verde oliva, fresco y versátil. Perfecto para el día a día sin sacrificar estilo.'
   ),
   (
-    'm4', 'clio-cuello-alto', 'Clio Cuello Alto', 'mujeres', 18000000, 20,
-    '/images/catalog-mujer-4.jpg', 'Clio Cuello Alto para mujeres',
+    'm4', 'clio-basico-cuello-alto', 'Clio Básico Cuello Alto', 'mujeres', 18000000, 20,
+    '/images/catalog-mujer-4.jpg', 'Clio Básico Cuello Alto para mujeres',
     'Carbón', 'Punto suave de alta recuperación', 'Cuello alto, manga larga', 'Talla única',
-    'Silueta chic con cuello alto. Una base sofisticada para looks de oficina o noche.'
+    'Básico chic con cuello alto. Una base sofisticada para looks de oficina o noche.'
   ),
   (
     'm5', 'clio-basico-essential', 'Clio Básico Essential', 'mujeres', 14000000, 20,
@@ -197,22 +197,22 @@ insert into public.products (
     'El básico que no puede faltar. Negro elegante, ajuste cómodo y sensación second-skin.'
   ),
   (
-    'm6', 'clio-encaje-elegance', 'Clio Encaje Elegance', 'mujeres', 19200000, 20,
-    '/images/coleccion-2.jpg', 'Clio Encaje Elegance rosa',
+    'm6', 'clio-basico-encaje-elegance', 'Clio Básico Encaje Elegance', 'mujeres', 19200000, 20,
+    '/images/coleccion-2.jpg', 'Clio Básico Encaje Elegance rosa',
     'Rosa dusty', 'Encaje suave forrado', 'Manga larga, silueta femenina', 'Talla única',
-    'Detalle de encaje con acabado delicado. Diseñado para momentos especiales sin perder comodidad.'
+    'Básico con detalle de encaje y acabado delicado. Diseñado para momentos especiales sin perder comodidad.'
   ),
   (
-    'm7', 'clio-rib-confort', 'Clio Rib Confort', 'mujeres', 12800000, 20,
-    '/images/coleccion-3.jpg', 'Clio Rib Confort verde oliva',
+    'm7', 'clio-basico-rib-confort', 'Clio Básico Rib Confort', 'mujeres', 12800000, 20,
+    '/images/coleccion-3.jpg', 'Clio Básico Rib Confort verde oliva',
     'Verde oliva', 'Rib stretch', 'Sin mangas, confort total', 'Talla única',
-    'Textura rib y libertad de movimiento. Ideal para looks casuales con presencia.'
+    'Básico con textura rib y libertad de movimiento. Ideal para looks casuales con presencia.'
   ),
   (
-    'm8', 'clio-cuello-alto-chic', 'Clio Cuello Alto Chic', 'mujeres', 16800000, 20,
-    '/images/coleccion-4.jpg', 'Clio Cuello Alto Chic gris',
+    'm8', 'clio-basico-cuello-alto-chic', 'Clio Básico Cuello Alto Chic', 'mujeres', 16800000, 20,
+    '/images/coleccion-4.jpg', 'Clio Básico Cuello Alto Chic gris',
     'Gris oscuro', 'Punto suave', 'Cuello alto, manga larga', 'Talla única',
-    'Versión chic en gris. Un body minimalista para elevar cualquier conjunto.'
+    'Versión básica chic en gris. Un body minimalista para elevar cualquier conjunto.'
   )
 on conflict (id) do update set
   name = excluded.name,

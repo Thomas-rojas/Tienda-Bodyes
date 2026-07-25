@@ -83,6 +83,21 @@ function Navbar() {
 
   const closeMenu = () => setMenuOpen(false)
 
+  const goHome = (event) => {
+    event.preventDefault()
+    closeMenu()
+    closeSearch()
+
+    if (location.pathname !== '/') {
+      navigate('/')
+    }
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      history.replaceState(null, '', '/')
+    })
+  }
+
   const openSearch = () => {
     setMenuOpen(false)
     setSearchOpen(true)
@@ -157,7 +172,7 @@ function Navbar() {
           )}
         </button>
 
-        <Link className="navbar__brand" to="/" onClick={closeMenu}>
+        <Link className="navbar__brand" to="/" onClick={goHome}>
           CLIO
         </Link>
 
