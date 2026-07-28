@@ -47,6 +47,7 @@ export async function createPendingOrder({ customer, items }) {
       id: crypto.randomUUID(),
       reference,
       status: 'pending',
+      customer_id: crypto.randomUUID(),
       customer_name: customer.name,
       customer_email: customer.email,
       customer_phone: customer.phone,
@@ -69,14 +70,25 @@ export async function createPendingOrder({ customer, items }) {
       reference,
       lineItems.map((li) => ({ ...li, id: crypto.randomUUID(), order_id: order.id })),
     )
+    store.payments.set(reference, {
+      id: crypto.randomUUID(),
+      order_id: order.id,
+      provider: 'mercadopago',
+      status: 'pending',
+      amount_cents: amountCents,
+      currency: 'COP',
+    })
     return { order, items: store.orderItems.get(reference) }
   }
+
+  const customerRow = await upsertCustomer(customer)
 
   const { data: order, error } = await supabase
     .from('orders')
     .insert({
       reference,
       status: 'pending',
+      customer_id: customerRow?.id ?? null,
       customer_name: customer.name,
       customer_email: customer.email,
       customer_phone: customer.phone,
@@ -104,27 +116,141 @@ export async function createPendingOrder({ customer, items }) {
     throw new AppError(itemsError.message, 502)
   }
 
+  const { error: paymentError } = await supabase.from('payments').insert({
+    order_id: order.id,
+    provider: 'mercadopago',
+    status: 'pending',
+    amount_cents: amountCents,
+    currency: 'COP',
+  })
+
+  if (paymentError) {
+    // Si aún no existe la tabla payments, el pedido sigue válido
+    const missing =
+      paymentError.message?.includes('Could not find the table') ||
+      paymentError.code === 'PGRST205'
+    if (!missing) {
+      await supabase.from('orders').delete().eq('id', order.id)
+      throw new AppError(paymentError.message, 502)
+    }
+    console.warn('[payments] Tabla payments no disponible:', paymentError.message)
+  }
+
   return { order, items: insertedItems }
 }
 
-export async function getOrderByReference(reference) {
+async function upsertCustomer(customer) {
+  try {
+    const { data, error } = await supabase.rpc('upsert_customer', {
+      p_email: customer.email,
+      p_name: customer.name,
+      p_phone: customer.phone,
+      p_document_type: customer.documentType,
+      p_document_number: customer.documentNumber,
+      p_address: customer.address,
+      p_city: customer.city,
+      p_region: customer.region,
+    })
+
+    if (!error) return data
+    if (
+      error.message?.includes('Could not find the function') ||
+      error.message?.includes('Could not find the table') ||
+      error.code === 'PGRST202' ||
+      error.code === 'PGRST205'
+    ) {
+      // Continúa al fallback o null
+    } else {
+      console.warn('[customers] upsert_customer:', error.message)
+    }
+  } catch (err) {
+    console.warn('[customers] RPC falló:', err.message)
+  }
+
+  // Fallback si el RPC aún no existe: inserta/actualiza por email
+  const payload = {
+    email: String(customer.email).trim().toLowerCase(),
+    name: customer.name,
+    phone: customer.phone,
+    document_type: customer.documentType,
+    document_number: customer.documentNumber,
+    address: customer.address,
+    city: customer.city,
+    region: customer.region,
+  }
+
+  try {
+    const { data: existing, error: findError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('email', payload.email)
+      .maybeSingle()
+
+    if (findError) {
+      if (
+        findError.message?.includes('Could not find the table') ||
+        findError.code === 'PGRST205'
+      ) {
+        return null
+      }
+      throw new AppError(findError.message, 502)
+    }
+
+    if (existing) {
+      const { data: updated, error: updateError } = await supabase
+        .from('customers')
+        .update(payload)
+        .eq('id', existing.id)
+        .select('*')
+        .single()
+      if (updateError) throw new AppError(updateError.message, 502)
+      return updated
+    }
+
+    const { data: created, error: createError } = await supabase
+      .from('customers')
+      .insert(payload)
+      .select('*')
+      .single()
+
+    if (createError) throw new AppError(createError.message, 502)
+    return created
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    console.warn('[customers] No se pudo guardar cliente:', err.message)
+    return null
+  }
+}
+
+export async function getOrderByReference(referenceOrId) {
   const ready = await tablesReady()
+  const key = String(referenceOrId || '')
 
   if (!ready) {
     const store = getMemoryStore()
-    const order = store.orders.get(reference)
+    let order = store.orders.get(key)
+    if (!order) {
+      order = [...store.orders.values()].find((row) => row.id === key) || null
+    }
     if (!order) return null
-    const items = store.orderItems.get(reference) || []
+    const items = store.orderItems.get(order.reference) || []
     return serializeOrder(order, items)
   }
 
-  const { data: order, error } = await supabase
+  let { data: order, error } = await supabase
     .from('orders')
     .select('*')
-    .eq('reference', reference)
+    .eq('reference', key)
     .maybeSingle()
 
   if (error) throw new AppError(error.message, 502)
+
+  if (!order) {
+    const byId = await supabase.from('orders').select('*').eq('id', key).maybeSingle()
+    if (byId.error) throw new AppError(byId.error.message, 502)
+    order = byId.data
+  }
+
   if (!order) return null
 
   const { data: items, error: itemsError } = await supabase
@@ -156,6 +282,16 @@ export async function updateOrderPayment({
     order.payment_method_type = paymentMethodType || order.payment_method_type
     order.updated_at = new Date().toISOString()
     store.orders.set(reference, order)
+
+    const payment = store.payments.get(reference)
+    if (payment) {
+      payment.status = status
+      payment.provider_transaction_id =
+        wompiTransactionId || payment.provider_transaction_id
+      payment.payment_method_type =
+        paymentMethodType || payment.payment_method_type
+    }
+
     return { order, alreadyPaid: false }
   }
 
@@ -184,6 +320,19 @@ export async function updateOrderPayment({
     .single()
 
   if (error) throw new AppError(error.message, 502)
+
+  await supabase
+    .from('payments')
+    .update({
+      status,
+      provider_transaction_id:
+        wompiTransactionId || existing.wompi_transaction_id,
+      payment_method_type:
+        paymentMethodType || existing.payment_method_type,
+    })
+    .eq('order_id', existing.id)
+    .eq('status', 'pending')
+
   return { order, alreadyPaid: false }
 }
 

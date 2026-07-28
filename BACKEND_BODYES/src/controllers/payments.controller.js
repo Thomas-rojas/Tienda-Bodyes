@@ -2,29 +2,40 @@ import { AppError } from '../middleware/errorHandler.js'
 import { getOrderByReference } from '../services/orders.service.js'
 import { processPaymentUpdate } from '../services/payments.service.js'
 import {
-  assertValidWebhook,
-  fetchWompiTransaction,
-  mapWompiStatus,
-} from '../services/wompi.service.js'
+  fetchMercadoPagoPayment,
+  mapProviderStatus,
+} from '../services/mercadopago.service.js'
 import { env } from '../config/env.js'
 
-export async function wompiWebhook(req, res) {
-  const event = req.body
-  assertValidWebhook(event)
+/**
+ * Webhook Mercado Pago (topic=payment o type=payment).
+ * Query: ?topic=payment&id=123  Body también puede traer data.id
+ */
+export async function mercadoPagoWebhook(req, res) {
+  const topic = req.query.topic || req.query.type || req.body?.type || req.body?.topic
+  const paymentId =
+    req.query.id ||
+    req.query['data.id'] ||
+    req.body?.data?.id ||
+    req.body?.id
 
-  const tx = event?.data?.transaction
-  if (!tx?.reference) {
-    throw new AppError('Evento sin referencia de transacción', 400)
+  // Responder rápido; procesar si es pago
+  if (String(topic).toLowerCase().includes('payment') && paymentId) {
+    const payment = await fetchMercadoPagoPayment(paymentId)
+    if (payment?.external_reference) {
+      await processPaymentUpdate({
+        reference: payment.external_reference,
+        providerStatus: payment.status,
+        providerTransactionId: String(payment.id),
+        paymentMethodType:
+          payment.payment_method_id ||
+          payment.payment_type_id ||
+          'MERCADOPAGO',
+      })
+    }
   }
 
-  const result = await processPaymentUpdate({
-    reference: tx.reference,
-    wompiStatus: tx.status,
-    wompiTransactionId: tx.id,
-    paymentMethodType: tx.payment_method_type || tx.payment_method?.type,
-  })
-
-  res.status(200).json({ ok: true, status: result.status })
+  res.status(200).json({ ok: true })
 }
 
 export async function simulatePayment(req, res) {
@@ -50,14 +61,15 @@ export async function simulatePayment(req, res) {
     'PSE',
     'NEQUI',
     'SIMULATED',
+    'MERCADOPAGO',
   ])
   const method = String(paymentMethodType || 'CREDIT_CARD').toUpperCase()
   if (!methods.has(method)) throw new AppError('Método de pago inválido', 400)
 
   const result = await processPaymentUpdate({
     reference,
-    wompiStatus: status,
-    wompiTransactionId: `sim_${Date.now()}`,
+    providerStatus: status,
+    providerTransactionId: `sim_${Date.now()}`,
     paymentMethodType: method,
   })
 
@@ -69,23 +81,43 @@ export async function simulatePayment(req, res) {
 }
 
 export async function syncTransaction(req, res) {
-  const { id, reference } = req.query
-  let ref = reference
+  const {
+    id,
+    payment_id: paymentIdQuery,
+    collection_id: collectionId,
+    reference,
+    external_reference: externalReference,
+    status: queryStatus,
+  } = req.query
 
-  if (id && !ref) {
-    const tx = await fetchWompiTransaction(id)
-    if (tx) {
-      ref = tx.reference
+  let ref = reference || externalReference
+  const paymentId = id || paymentIdQuery || collectionId
+
+  if (paymentId && env.mercadoPago.accessToken) {
+    const payment = await fetchMercadoPagoPayment(paymentId)
+    if (payment?.external_reference) {
+      ref = payment.external_reference
       await processPaymentUpdate({
-        reference: tx.reference,
-        wompiStatus: tx.status,
-        wompiTransactionId: tx.id,
-        paymentMethodType: tx.payment_method_type,
+        reference: payment.external_reference,
+        providerStatus: payment.status,
+        providerTransactionId: String(payment.id),
+        paymentMethodType:
+          payment.payment_method_id ||
+          payment.payment_type_id ||
+          'MERCADOPAGO',
       })
     }
+  } else if (ref && queryStatus) {
+    // Retorno de MP con status en query (sin poder consultar API aún)
+    await processPaymentUpdate({
+      reference: ref,
+      providerStatus: queryStatus,
+      providerTransactionId: paymentId ? String(paymentId) : undefined,
+      paymentMethodType: 'MERCADOPAGO',
+    })
   }
 
-  if (!ref) throw new AppError('Indica reference o id de transacción', 400)
+  if (!ref) throw new AppError('Indica reference o payment_id', 400)
 
   const order = await getOrderByReference(ref)
   if (!order) throw new AppError('Pedido no encontrado', 404)
@@ -104,4 +136,4 @@ function mapOrderUiStatus(status) {
   return 'pending'
 }
 
-export { mapWompiStatus }
+export { mapProviderStatus }

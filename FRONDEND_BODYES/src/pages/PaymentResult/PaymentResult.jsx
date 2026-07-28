@@ -14,13 +14,26 @@ function PaymentResult() {
   useEffect(() => {
     window.scrollTo(0, 0)
     const id = params.get('id') || params.get('transaction_id')
+    const payment_id = params.get('payment_id')
+    const collection_id = params.get('collection_id')
+    const status = params.get('status') || params.get('collection_status')
     const reference =
-      params.get('reference') || sessionStorage.getItem('clio_last_reference')
+      params.get('reference') ||
+      params.get('external_reference') ||
+      sessionStorage.getItem('clio_last_reference')
+    const external_reference = params.get('external_reference')
 
     let cancelled = false
     ;(async () => {
       try {
-        const data = await syncPayment({ id, reference })
+        const data = await syncPayment({
+          id,
+          payment_id,
+          collection_id,
+          reference,
+          external_reference,
+          status,
+        })
         if (cancelled) return
         if (data.uiStatus === 'success' && sessionStorage.getItem('clio_clear_cart_on_paid')) {
           clearCart()

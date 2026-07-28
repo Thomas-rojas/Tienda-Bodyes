@@ -45,10 +45,21 @@ export function fetchOrderByReference(reference) {
   return request(`/api/orders/by-reference/${encodeURIComponent(reference)}`)
 }
 
-export function syncPayment({ id, reference }) {
+export function syncPayment({
+  id,
+  payment_id,
+  collection_id,
+  reference,
+  external_reference,
+  status,
+}) {
   const params = new URLSearchParams()
   if (id) params.set('id', id)
+  if (payment_id) params.set('payment_id', payment_id)
+  if (collection_id) params.set('collection_id', collection_id)
   if (reference) params.set('reference', reference)
+  if (external_reference) params.set('external_reference', external_reference)
+  if (status) params.set('status', status)
   return request(`/api/payments/sync?${params.toString()}`)
 }
 

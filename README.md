@@ -1,7 +1,7 @@
 # CLIO · Tienda Bodyes
 
 Frontend: `FRONDEND_BODYES` (Vite + React)  
-Backend: `BACKEND_BODYES` (Express + Supabase + Wompi)
+Backend: `BACKEND_BODYES` (Express + Supabase + Mercado Pago)
 
 ## Arranque rápido
 
@@ -20,10 +20,10 @@ npm run dev
 ```
 
 1. Aplica el SQL de [`BACKEND_BODYES/supabase/schema.sql`](BACKEND_BODYES/supabase/schema.sql) en el SQL Editor de Supabase.
-2. Configura Wompi / Resend / WhatsApp según [`BACKEND_BODYES/docs/PAGOS.md`](BACKEND_BODYES/docs/PAGOS.md).
+2. Configura Mercado Pago / correo / WhatsApp según [`BACKEND_BODYES/docs/PAGOS.md`](BACKEND_BODYES/docs/PAGOS.md).
 
-Sin claves Wompi en development, el checkout usa **modo simulación** (`/pago/simular`).
+Sin `MERCADOPAGO_ACCESS_TOKEN` en development, el checkout usa **modo simulación** (`/pago/simular`).
 
 ## Seguridad de pagos
 
-Las llaves privadas de Wompi y Supabase van **solo** en `BACKEND_BODYES/.env`. Nunca en el frontend ni en Git.
+El Access Token de Mercado Pago y las llaves de Supabase van **solo** en `BACKEND_BODYES/.env`. Nunca en el frontend ni en Git.

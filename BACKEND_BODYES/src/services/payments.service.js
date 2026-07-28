@@ -6,23 +6,23 @@ import {
 import { fulfillOrderInventory } from './inventory.service.js'
 import { sendOrderConfirmationEmail } from './email.service.js'
 import { sendOrderConfirmationWhatsApp } from './whatsapp.service.js'
-import { mapWompiStatus } from './wompi.service.js'
+import { mapProviderStatus } from './mercadopago.service.js'
 
 /**
- * Procesa un estado final de pago (webhook o simulación).
+ * Procesa un estado final de pago (webhook MP, retorno o simulación).
  * Idempotente: no reenvía notificaciones ni descuenta stock dos veces.
  */
 export async function processPaymentUpdate({
   reference,
-  wompiStatus,
-  wompiTransactionId,
+  providerStatus,
+  providerTransactionId,
   paymentMethodType,
 }) {
-  const status = mapWompiStatus(wompiStatus)
+  const status = mapProviderStatus(providerStatus)
   const { order: rawOrder, alreadyPaid } = await updateOrderPayment({
     reference,
     status,
-    wompiTransactionId,
+    wompiTransactionId: providerTransactionId,
     paymentMethodType,
   })
 

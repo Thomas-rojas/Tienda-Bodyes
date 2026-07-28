@@ -1,10 +1,33 @@
--- CLIO · Schema de productos, pedidos e inventario
--- Ejecutar en Supabase → SQL Editor (una vez)
+-- CLIO · Schema: productos, clientes, pedidos y pagos
+-- Ejecutar en Supabase → SQL Editor (proyecto completo, una vez)
+-- Dashboard: https://supabase.com/dashboard/project/asmfylasaikbmryrakcy/sql/new
 
 create extension if not exists "pgcrypto";
 
 -- ---------------------------------------------------------------------------
--- products
+-- customers (clientes)
+-- ---------------------------------------------------------------------------
+create table if not exists public.customers (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  name text not null,
+  phone text not null,
+  document_type text not null,
+  document_number text not null,
+  address text,
+  city text,
+  region text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint customers_email_unique unique (email),
+  constraint customers_document_unique unique (document_type, document_number)
+);
+
+create index if not exists customers_email_idx on public.customers (email);
+create index if not exists customers_phone_idx on public.customers (phone);
+
+-- ---------------------------------------------------------------------------
+-- products (productos / inventario)
 -- ---------------------------------------------------------------------------
 create table if not exists public.products (
   id text primary key,
@@ -26,15 +49,17 @@ create table if not exists public.products (
 );
 
 create index if not exists products_active_idx on public.products (active);
+create index if not exists products_category_idx on public.products (category);
 
 -- ---------------------------------------------------------------------------
--- orders
+-- orders (pedidos; datos de cliente desnormalizados para recibos)
 -- ---------------------------------------------------------------------------
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   reference text not null unique,
   status text not null default 'pending'
     check (status in ('pending', 'paid', 'declined', 'error', 'voided')),
+  customer_id uuid references public.customers (id) on delete set null,
   customer_name text not null,
   customer_email text not null,
   customer_phone text not null,
@@ -57,8 +82,35 @@ create index if not exists orders_reference_idx on public.orders (reference);
 create index if not exists orders_status_idx on public.orders (status);
 create index if not exists orders_wompi_tx_idx on public.orders (wompi_transaction_id);
 
+-- Compatibilidad si orders ya existía sin customer_id
+alter table public.orders
+  add column if not exists customer_id uuid references public.customers (id) on delete set null;
+
+create index if not exists orders_customer_idx on public.orders (customer_id);
+
 -- ---------------------------------------------------------------------------
--- order_items
+-- payments (Mercado Pago / simulación)
+-- ---------------------------------------------------------------------------
+create table if not exists public.payments (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders (id) on delete cascade,
+  provider text not null default 'mercadopago',
+  status text not null default 'pending'
+    check (status in ('pending', 'paid', 'declined', 'error', 'voided')),
+  amount_cents integer not null check (amount_cents > 0),
+  currency text not null default 'COP',
+  provider_transaction_id text,
+  payment_method_type text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists payments_order_idx on public.payments (order_id);
+create index if not exists payments_status_idx on public.payments (status);
+create index if not exists payments_provider_tx_idx on public.payments (provider_transaction_id);
+
+-- ---------------------------------------------------------------------------
+-- order_items (líneas del pedido)
 -- ---------------------------------------------------------------------------
 create table if not exists public.order_items (
   id uuid primary key default gen_random_uuid(),
@@ -71,6 +123,7 @@ create table if not exists public.order_items (
 );
 
 create index if not exists order_items_order_idx on public.order_items (order_id);
+create index if not exists order_items_product_idx on public.order_items (product_id);
 
 -- ---------------------------------------------------------------------------
 -- updated_at trigger
@@ -85,6 +138,11 @@ begin
 end;
 $$;
 
+drop trigger if exists customers_set_updated_at on public.customers;
+create trigger customers_set_updated_at
+  before update on public.customers
+  for each row execute function public.set_updated_at();
+
 drop trigger if exists products_set_updated_at on public.products;
 create trigger products_set_updated_at
   before update on public.products
@@ -95,8 +153,66 @@ create trigger orders_set_updated_at
   before update on public.orders
   for each row execute function public.set_updated_at();
 
+drop trigger if exists payments_set_updated_at on public.payments;
+create trigger payments_set_updated_at
+  before update on public.payments
+  for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
--- FulFill order: descuenta stock de forma atómica e idempotente
+-- Upsert cliente por email o documento
+-- ---------------------------------------------------------------------------
+create or replace function public.upsert_customer(
+  p_email text,
+  p_name text,
+  p_phone text,
+  p_document_type text,
+  p_document_number text,
+  p_address text,
+  p_city text,
+  p_region text
+)
+returns public.customers
+language plpgsql
+security definer
+as $$
+declare
+  v_customer public.customers%rowtype;
+begin
+  select * into v_customer
+  from public.customers
+  where email = lower(trim(p_email))
+     or (document_type = p_document_type and document_number = p_document_number)
+  limit 1
+  for update;
+
+  if found then
+    update public.customers set
+      email = lower(trim(p_email)),
+      name = p_name,
+      phone = p_phone,
+      document_type = p_document_type,
+      document_number = p_document_number,
+      address = coalesce(p_address, address),
+      city = coalesce(p_city, city),
+      region = coalesce(p_region, region)
+    where id = v_customer.id
+    returning * into v_customer;
+  else
+    insert into public.customers (
+      email, name, phone, document_type, document_number, address, city, region
+    ) values (
+      lower(trim(p_email)), p_name, p_phone, p_document_type, p_document_number,
+      p_address, p_city, p_region
+    )
+    returning * into v_customer;
+  end if;
+
+  return v_customer;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Cumplir pedido pagado: descuenta stock de forma atómica e idempotente
 -- ---------------------------------------------------------------------------
 create or replace function public.fulfill_paid_order(p_reference text)
 returns jsonb
@@ -146,10 +262,12 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- RLS: lectura pública de productos activos; orders solo service role
+-- RLS: productos activos públicos; resto solo service role
 -- ---------------------------------------------------------------------------
+alter table public.customers enable row level security;
 alter table public.products enable row level security;
 alter table public.orders enable row level security;
+alter table public.payments enable row level security;
 alter table public.order_items enable row level security;
 
 drop policy if exists products_public_read on public.products;
@@ -157,10 +275,10 @@ create policy products_public_read on public.products
   for select
   using (active = true);
 
--- Sin policies de insert/update para anon → solo service role (bypass RLS)
+-- Sin policies de escritura para anon → solo service role (bypass RLS)
 
 -- ---------------------------------------------------------------------------
--- Seed (precios en centavos COP)
+-- Seed productos (precios en centavos COP)
 -- ---------------------------------------------------------------------------
 insert into public.products (
   id, slug, name, category, price_cents, stock, image_path, alt,
@@ -215,6 +333,7 @@ insert into public.products (
     'Versión básica chic en gris. Un body minimalista para elevar cualquier conjunto.'
   )
 on conflict (id) do update set
+  slug = excluded.slug,
   name = excluded.name,
   price_cents = excluded.price_cents,
   image_path = excluded.image_path,

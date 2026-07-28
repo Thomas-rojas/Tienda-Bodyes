@@ -3,6 +3,7 @@ import cors from 'cors'
 import { checkSupabaseConnection } from './config/database.js'
 import { env } from './config/env.js'
 import { errorHandler } from './middleware/errorHandler.js'
+import { getEmailTransportStatus } from './services/email.service.js'
 import productsRoutes from './routes/products.routes.js'
 import checkoutRoutes from './routes/checkout.routes.js'
 import paymentsRoutes from './routes/payments.routes.js'
@@ -21,13 +22,19 @@ app.use('/uploads', express.static('uploads'))
 
 app.get('/api/health', async (_req, res) => {
   const supabase = await checkSupabaseConnection()
+  const email = getEmailTransportStatus()
   res.json({
     ok: true,
     service: 'clio-backend',
     supabase,
     payments: {
-      mode: env.simulatePayments ? 'simulate' : 'wompi',
-      wompiEnv: env.wompi.env,
+      mode: env.simulatePayments ? 'simulate' : 'mercadopago',
+      mercadoPagoEnv: env.mercadoPago.env,
+      configured: Boolean(env.mercadoPago.accessToken),
+    },
+    email: {
+      ...email,
+      storeEmailConfigured: Boolean(env.email.storeEmail),
     },
   })
 })

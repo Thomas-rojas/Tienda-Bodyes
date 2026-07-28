@@ -1,4 +1,4 @@
-/** Catálogo local de respaldo (precios en centavos Wompi: pesos * 100). */
+/** Catálogo local de respaldo (precios en centavos: pesos * 100). */
 export const LOCAL_PRODUCTS = [
   {
     id: 'm1',

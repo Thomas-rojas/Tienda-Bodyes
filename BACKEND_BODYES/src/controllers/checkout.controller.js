@@ -1,17 +1,11 @@
-import { validateCheckoutPayload } from '../utils/validate.js'
-import { AppError } from '../middleware/errorHandler.js'
-import { createPendingOrder } from '../services/orders.service.js'
-import { buildCheckoutPayload } from '../services/wompi.service.js'
 import { env } from '../config/env.js'
+import { createPendingOrder } from '../services/orders.service.js'
+import { buildCheckoutPayload } from '../services/mercadopago.service.js'
 
 export async function createCheckoutSession(req, res) {
-  const validation = validateCheckoutPayload(req.body)
-  if (!validation.ok) {
-    throw new AppError('Datos de checkout inválidos', 400, validation.errors)
-  }
-
-  const { order } = await createPendingOrder(validation.data)
-  const checkout = buildCheckoutPayload(order, validation.data.customer)
+  const data = req.validated
+  const { order, items } = await createPendingOrder(data)
+  const checkout = await buildCheckoutPayload(order, items, data.customer)
 
   res.status(201).json({
     ok: true,
@@ -19,13 +13,12 @@ export async function createCheckoutSession(req, res) {
     amountCents: order.amount_cents,
     mode: checkout.mode,
     checkoutUrl: checkout.checkoutUrl,
-    wompi: {
+    mercadopago: {
       publicKey: checkout.publicKey,
+      preferenceId: checkout.preferenceId,
       currency: checkout.currency,
       amountInCents: checkout.amountInCents,
       reference: checkout.reference,
-      signatureIntegrity: checkout.signatureIntegrity,
-      redirectUrl: checkout.redirectUrl,
     },
     simulatePayments: env.simulatePayments,
   })

@@ -12,6 +12,7 @@ function getMemoryStore() {
       products: LOCAL_PRODUCTS.map((p) => ({ ...p })),
       orders: new Map(),
       orderItems: new Map(),
+      payments: new Map(),
     }
   }
   return memoryStore

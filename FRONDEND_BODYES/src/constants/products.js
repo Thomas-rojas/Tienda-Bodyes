@@ -6,7 +6,7 @@ export function formatCop(pesos) {
   }).format(pesos)
 }
 
-/** Precios en pesos COP (Wompi usa centavos = pesos * 100). */
+/** Precios en pesos COP (en API/BD: centavos = pesos * 100). */
 export const catalogProducts = [
   {
     id: 'm1',
