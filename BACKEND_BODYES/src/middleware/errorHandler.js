@@ -8,10 +8,14 @@ export class AppError extends Error {
 }
 
 export function errorHandler(err, _req, res, _next) {
-  const status = err.status || 500
+  const status = err.status || (err.name === 'MulterError' ? 400 : 500)
+  const message =
+    err.code === 'LIMIT_FILE_SIZE'
+      ? 'La imagen supera el límite de 5 MB'
+      : err.message || 'Error interno del servidor'
   const payload = {
     ok: false,
-    error: err.message || 'Error interno del servidor',
+    error: message,
   }
   if (err.details) payload.details = err.details
   if (status >= 500) {

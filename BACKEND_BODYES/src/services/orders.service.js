@@ -346,6 +346,51 @@ export async function markNotificationsSent(reference) {
   await supabase.from('orders').update({ notifications_sent: true }).eq('reference', reference)
 }
 
+export async function listOrders({ status = 'paid' } = {}) {
+  const ready = await tablesReady()
+
+  if (!ready) {
+    const store = getMemoryStore()
+    let orders = [...store.orders.values()]
+    if (status) {
+      orders = orders.filter((order) => order.status === status)
+    }
+    orders.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    return orders.map((order) => {
+      const items = store.orderItems.get(order.reference) || []
+      return serializeOrder(order, items)
+    })
+  }
+
+  let query = supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (status) query = query.eq('status', status)
+
+  const { data: orders, error } = await query
+  if (error) throw new AppError(error.message, 502)
+  if (!orders?.length) return []
+
+  const ids = orders.map((order) => order.id)
+  const { data: items, error: itemsError } = await supabase
+    .from('order_items')
+    .select('*')
+    .in('order_id', ids)
+
+  if (itemsError) throw new AppError(itemsError.message, 502)
+
+  const byOrderId = new Map()
+  for (const item of items || []) {
+    const list = byOrderId.get(item.order_id) || []
+    list.push(item)
+    byOrderId.set(item.order_id, list)
+  }
+
+  return orders.map((order) => serializeOrder(order, byOrderId.get(order.id) || []))
+}
+
 function serializeOrder(order, items) {
   const pesos = Math.round(order.amount_cents / 100)
   return {

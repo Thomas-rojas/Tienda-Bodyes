@@ -76,10 +76,24 @@ export function validateCheckoutPayload(body) {
   }
 }
 
-export function mapProductRow(row) {
+function resolveImageUrl(imagePath) {
+  if (!imagePath) return ''
+  const value = String(imagePath)
+  if (/^https?:\/\//i.test(value)) return value
+  if (value.startsWith('/uploads/')) {
+    const base = (process.env.BACKEND_URL || 'http://localhost:4000').replace(
+      /\/$/,
+      '',
+    )
+    return `${base}${value}`
+  }
+  return value
+}
+
+export function mapProductRow(row, { includeActive = false } = {}) {
   if (!row) return null
   const pesos = Math.round(Number(row.price_cents) / 100)
-  return {
+  const mapped = {
     id: row.id,
     slug: row.slug,
     category: row.category,
@@ -88,7 +102,8 @@ export function mapProductRow(row) {
     pricePesos: pesos,
     price: formatCop(pesos),
     stock: row.stock,
-    image: row.image_path,
+    image: resolveImageUrl(row.image_path),
+    imagePath: row.image_path,
     alt: row.alt,
     color: row.color,
     material: row.material,
@@ -96,6 +111,8 @@ export function mapProductRow(row) {
     size: row.size,
     description: row.description,
   }
+  if (includeActive) mapped.active = row.active !== false
+  return mapped
 }
 
 export function formatCop(pesos) {

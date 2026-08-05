@@ -26,6 +26,17 @@ async function request(path, options = {}) {
   return data
 }
 
+function adminRequest(path, options = {}) {
+  const token = localStorage.getItem('clio_admin_token') || ''
+  return request(path, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+}
+
 export function fetchProducts() {
   return request('/api/products')
 }
@@ -72,6 +83,94 @@ export function simulatePayment(
     method: 'POST',
     body: JSON.stringify({ reference, outcome, paymentMethodType }),
   })
+}
+
+export function adminLogin(email, password) {
+  return request('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+}
+
+export function fetchAdminProducts() {
+  return adminRequest('/api/admin/products')
+}
+
+export function updateAdminProduct(id, patch) {
+  return adminRequest(`/api/admin/products/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
+export function deleteAdminProduct(id) {
+  return adminRequest(`/api/admin/products/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function createAdminProduct(fields, file) {
+  const token = localStorage.getItem('clio_admin_token') || ''
+  const formData = new FormData()
+
+  Object.entries(fields || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    formData.append(key, String(value))
+  })
+  if (file) formData.append('image', file)
+
+  const response = await fetch(`${API_URL}/api/admin/products`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  })
+
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    data = null
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'No se pudo crear el producto')
+  }
+
+  return data
+}
+
+export async function uploadAdminProductImage(id, file) {
+  const token = localStorage.getItem('clio_admin_token') || ''
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const response = await fetch(
+    `${API_URL}/api/admin/products/${encodeURIComponent(id)}/image`,
+    {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    },
+  )
+
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    data = null
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'No se pudo subir la imagen')
+  }
+
+  return data
+}
+
+export function fetchAdminOrders(status = 'paid') {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  return adminRequest(`/api/admin/orders?${params.toString()}`)
 }
 
 export { API_URL }

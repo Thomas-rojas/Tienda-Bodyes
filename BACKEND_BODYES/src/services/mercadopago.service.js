@@ -47,6 +47,15 @@ function splitName(fullName) {
   }
 }
 
+/** Teléfono local CO: quita 57 al inicio para no duplicar area_code. */
+function normalizeCoPhone(phone) {
+  let digits = String(phone || '').replace(/\D/g, '')
+  if (digits.startsWith('57') && digits.length > 10) {
+    digits = digits.slice(2)
+  }
+  return digits.slice(0, 15)
+}
+
 /**
  * Crea preferencia Checkout Pro o URL de simulación.
  * unit_price en COP = price_cents / 100 (price_cents = pesos × 100).
@@ -87,34 +96,51 @@ export async function buildCheckoutPayload(order, items, customer) {
   }
 
   const { name, surname } = splitName(customer.name)
+  const phoneNumber = normalizeCoPhone(customer.phone)
   const resultUrl = `${env.frontendUrl}/pago/resultado`
+  const useSandbox = env.mercadoPago.env !== 'production'
   const frontendIsHttps = String(env.frontendUrl).startsWith('https://')
   const backendIsHttps = String(env.backendUrl).startsWith('https://')
 
   const body = {
     items: lineItems,
     payer: {
-      name,
-      surname,
       email: customer.email,
-      phone: {
-        area_code: '57',
-        number: String(customer.phone || '').replace(/\D/g, ''),
-      },
-      identification: {
-        type: customer.documentType || 'CC',
-        number: String(customer.documentNumber || ''),
-      },
-      address: {
-        street_name: customer.address,
-      },
     },
     external_reference: reference,
-    statement_descriptor: 'CLIO',
+    statement_descriptor: 'CLIOBODY',
     binary_mode: false,
     metadata: {
       clio_reference: reference,
     },
+    payment_methods: {
+      installments: 12,
+      default_installments: 1,
+    },
+  }
+
+  // En sandbox, prefills de documento/teléfono chocan a menudo con la tarjeta de prueba.
+  if (!useSandbox) {
+    body.payer.name = name
+    body.payer.surname = surname
+    if (phoneNumber) {
+      body.payer.phone = {
+        area_code: '57',
+        number: phoneNumber,
+      }
+    }
+    const docNumber = String(customer.documentNumber || '').replace(/\D/g, '')
+    if (docNumber) {
+      body.payer.identification = {
+        type: customer.documentType || 'CC',
+        number: docNumber,
+      }
+    }
+    if (customer.address) {
+      body.payer.address = {
+        street_name: String(customer.address).slice(0, 256),
+      }
+    }
   }
 
   // MP bloquea back_urls / notification_url con http:// (incluye localhost).
@@ -155,13 +181,18 @@ export async function buildCheckoutPayload(order, items, customer) {
   }
 
   const preference = await response.json()
-  const useSandbox = env.mercadoPago.env !== 'production'
   const checkoutUrl = useSandbox
     ? preference.sandbox_init_point || preference.init_point
     : preference.init_point || preference.sandbox_init_point
 
   if (!checkoutUrl) {
     throw new AppError('Mercado Pago no devolvió URL de checkout', 502)
+  }
+
+  if (useSandbox && !preference.sandbox_init_point) {
+    console.warn(
+      '[mercadopago] Sin sandbox_init_point: revisa que las claves sean de PRUEBA, no de producción.',
+    )
   }
 
   return {

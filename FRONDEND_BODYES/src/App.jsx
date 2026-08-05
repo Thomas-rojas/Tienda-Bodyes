@@ -9,6 +9,10 @@ import Checkout from './pages/Checkout/Checkout'
 import PaymentResult from './pages/PaymentResult/PaymentResult'
 import PaymentSimulate from './pages/PaymentSimulate/PaymentSimulate'
 import Receipt from './pages/Receipt/Receipt'
+import AdminLogin from './pages/Admin/AdminLogin'
+import AdminGuard from './pages/Admin/AdminGuard'
+import AdminProducts from './pages/Admin/AdminProducts'
+import AdminSales from './pages/Admin/AdminSales'
 import './assets/styles/global.css'
 
 function App() {
@@ -25,6 +29,11 @@ function App() {
           <Route path="/pago/resultado" element={<PaymentResult />} />
           <Route path="/pago/simular" element={<PaymentSimulate />} />
           <Route path="/comprobante/:reference" element={<Receipt />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route element={<AdminGuard />}>
+            <Route path="/admin/productos" element={<AdminProducts />} />
+            <Route path="/admin/ventas" element={<AdminSales />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </CartProvider>

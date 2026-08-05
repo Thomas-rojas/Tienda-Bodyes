@@ -38,7 +38,11 @@ export const env = {
     (process.env.NODE_ENV !== 'production' &&
       !process.env.MERCADOPAGO_ACCESS_TOKEN),
   jwt: {
-    secret: process.env.JWT_SECRET,
+    secret: process.env.JWT_SECRET || 'change_this_secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  },
+  admin: {
+    email: (process.env.ADMIN_EMAIL || 'admin@clio.com').toLowerCase().trim(),
+    password: process.env.ADMIN_PASSWORD || 'clioadmin123',
   },
 }
