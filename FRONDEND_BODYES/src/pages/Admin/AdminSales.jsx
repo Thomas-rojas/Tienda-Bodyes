@@ -99,6 +99,17 @@ function AdminSales() {
                         </li>
                       ))}
                     </ul>
+                    {order.whatsappStoreUrl && (
+                      <p className="admin-sale__wa">
+                        <a
+                          href={order.whatsappStoreUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Avisar al cliente por WhatsApp
+                        </a>
+                      </p>
+                    )}
                   </div>
                 )}
               </article>

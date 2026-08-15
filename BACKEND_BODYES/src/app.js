@@ -4,6 +4,7 @@ import { checkSupabaseConnection } from './config/database.js'
 import { env } from './config/env.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { getEmailTransportStatus } from './services/email.service.js'
+import { verifyMercadoPagoCredentials } from './services/mercadopago.service.js'
 import { uploadsDir } from './middleware/upload.js'
 import productsRoutes from './routes/products.routes.js'
 import checkoutRoutes from './routes/checkout.routes.js'
@@ -26,14 +27,29 @@ app.use('/uploads', express.static(uploadsDir))
 app.get('/api/health', async (_req, res) => {
   const supabase = await checkSupabaseConnection()
   const email = getEmailTransportStatus()
+  const mpReady = env.simulatePayments
+    ? { ok: true, mode: 'simulate' }
+    : await verifyMercadoPagoCredentials()
+
   res.json({
-    ok: true,
+    ok: Boolean(mpReady.ok),
     service: 'clio-backend',
     supabase,
     payments: {
-      mode: env.simulatePayments ? 'simulate' : 'mercadopago',
+      mode: env.simulatePayments ? 'simulate' : 'checkout_api',
+      integration: 'checkout_api',
       mercadoPagoEnv: env.mercadoPago.env,
-      configured: Boolean(env.mercadoPago.accessToken),
+      configured: Boolean(env.mercadoPago.accessToken && env.mercadoPago.publicKey),
+      ready: Boolean(mpReady.ok),
+      detail: mpReady.detail || null,
+      siteId: mpReady.siteId || null,
+      collectorId: mpReady.collectorId || null,
+      testUser: Boolean(mpReady.testUser),
+      publicKeyConfigured: Boolean(mpReady.publicKeyConfigured ?? env.mercadoPago.publicKey),
+      publicKeySuffix: mpReady.publicKeySuffix ||
+        (env.mercadoPago.publicKey
+          ? String(env.mercadoPago.publicKey).slice(-12)
+          : null),
       credentialsKind: String(env.mercadoPago.accessToken || '').startsWith('TEST-')
         ? 'TEST'
         : String(env.mercadoPago.accessToken || '').startsWith('APP_USR-')

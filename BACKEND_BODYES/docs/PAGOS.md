@@ -1,70 +1,50 @@
-# Pagos CLIO · Mercado Pago (Colombia)
+# Pagos CLIO · Mercado Pago Checkout API (Colombia)
 
 ## Resumen
 
-La tienda usa **Mercado Pago Checkout Pro**: el cliente paga con tarjeta, PSE, Nequi u otros métodos **en el dominio de Mercado Pago**. CLIO **nunca** recibe ni almacena números de tarjeta, CVV ni fechas.
-
-Flujo:
+La tienda usa **Mercado Pago Checkout API** con **Card Payment Brick**:
 
 1. El cliente completa envío en `/pagar`.
-2. El backend crea el pedido y una **preferencia** MP (`POST /checkout/preferences`).
-3. El usuario es redirigido a Mercado Pago (o a `/pago/simular` en modo prueba).
-4. MP notifica `POST /api/payments/mercadopago/webhook` (en producción con HTTPS) y/o el usuario vuelve a `/pago/resultado`.
-5. El backend marca el pedido como `paid` y envía correo / WhatsApp.
+2. El backend crea el pedido `pending` en Supabase y devuelve `publicKey` + monto + `reference`.
+3. El frontend muestra el Brick (tokeniza la tarjeta en el browser).
+4. El frontend envía el `token` a `POST /api/payments/mercadopago/process`.
+5. El backend crea el pago con Access Token (`POST /v1/payments`) y actualiza el pedido.
+6. Webhook (HTTPS) y/o sync por `reference` confirman el estado.
 
-## Claves
+**No** se usa Checkout Pro, `init_point` ni preferencias de redirección.
+
+## Variables
 
 | Variable | Dónde | Secreta |
 |----------|--------|---------|
-| `MERCADOPAGO_ACCESS_TOKEN` (`TEST-...` / `APP_USR-...`) | **Solo** `BACKEND_BODYES/.env` | Sí |
-| `MERCADOPAGO_PUBLIC_KEY` (`TEST-...` / `APP_USR-...`) | Backend (opcional en front) | No |
+| `MERCADOPAGO_ACCESS_TOKEN` | Solo backend `.env` | Sí |
+| `MERCADOPAGO_PUBLIC_KEY` | Backend (se expone al front vía API de sesión) | No |
 | `MERCADOPAGO_ENV` (`test` / `production`) | Backend | — |
+| `VITE_API_URL` | Frontend | No |
 
-Dashboard: [https://www.mercadopago.com.co/developers/panel](https://www.mercadopago.com.co/developers/panel)
+Opcional en frontend: `VITE_MERCADOPAGO_PUBLIC_KEY` (no requerida; la sesión ya envía la Public Key).
 
-## Configuración local
-
-1. Crea una aplicación en el panel de desarrolladores de Mercado Pago.
-2. Copia **Access Token** y **Public Key** de prueba.
-3. En `BACKEND_BODYES/.env`:
+## Local TEST
 
 ```env
 MERCADOPAGO_ENV=test
-MERCADOPAGO_ACCESS_TOKEN=TEST-...
-MERCADOPAGO_PUBLIC_KEY=TEST-...
+MERCADOPAGO_ACCESS_TOKEN=TEST-...   # Access Token de prueba (NO la Public Key)
+MERCADOPAGO_PUBLIC_KEY=TEST-538403dc-933b-4bbe-b2d3-40a5187e41bc
 FRONTEND_URL=http://localhost:5173
 BACKEND_URL=http://localhost:4000
 ```
 
-4. Reinicia el backend. `GET /api/health` debe mostrar `payments.mode: "mercadopago"`.
-5. En checkout serás redirigido a `sandbox_init_point` (ambiente de prueba).
-
-### Sin claves (desarrollo rápido)
-
-Si `MERCADOPAGO_ACCESS_TOKEN` está vacío en `development`, el backend activa **simulación**:
-
-- Redirect a `/pago/simular`
-- `POST /api/payments/simulate` marca el pedido como pagado
-
-### Producción
-
-1. Completa la activación de la cuenta en Mercado Pago (persona natural con cédula está bien).
-2. Usa Access Token / Public Key de **producción**.
-3. `MERCADOPAGO_ENV=production`
-4. `BACKEND_URL` debe ser **HTTPS** (el webhook `notification_url` exige HTTPS).
-5. Configura en el panel (opcional) la URL de notificaciones:
-
-```text
-https://tu-dominio.com/api/payments/mercadopago/webhook
-```
+Tarjetas de prueba CO: titular `APRO` aprueba, `OTHE` rechaza.
 
 ## Endpoints
 
-- `POST /api/checkout/session` — crea pedido + preferencia MP
-- `POST|GET /api/payments/mercadopago/webhook` — notificaciones MP
-- `GET /api/payments/sync` — sincroniza por `payment_id` / `reference` / `external_reference`
-- `POST /api/payments/simulate` — solo desarrollo / simulación
+- `POST /api/checkout/session` — crea pedido pending + datos Brick
+- `POST /api/payments/mercadopago/process` — crea pago Checkout API
+- `POST|GET /api/payments/mercadopago/webhook` — notificaciones MP (HTTPS)
+- `GET /api/payments/sync` — sincroniza por `payment_id` / `reference`
 
-## Precios
+## Idempotencia
 
-En BD los precios siguen en `price_cents` (= pesos × 100). Al crear la preferencia, MP recibe `unit_price` en **pesos** (`price_cents / 100`).
+- Un checkout crea **un** pedido `pending`.
+- Si el pedido ya está `paid`, `process` no crea otro cobro.
+- Webhook + process usan `processPaymentUpdate` (no reenvía notificaciones dos veces).

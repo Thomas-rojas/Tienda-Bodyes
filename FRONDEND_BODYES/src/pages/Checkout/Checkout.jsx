@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/navbar/Navbar'
+import MercadoPagoCardBrick from '../../components/payments/MercadoPagoCardBrick'
 import { useCart } from '../../context/CartContext'
 import { formatCop } from '../../constants/products'
 import { createCheckoutSession } from '../../services/api'
@@ -42,10 +43,12 @@ function validateForm(form, hasItems) {
 
 function Checkout() {
   const navigate = useNavigate()
-  const { items, totalItems, totalPrice } = useCart()
+  const { items, totalItems, totalPrice, clearCart } = useCart()
+  const [step, setStep] = useState('shipping')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+  const [paymentSession, setPaymentSession] = useState(null)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -59,7 +62,7 @@ function Checkout() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [])
+  }, [step])
 
   const hasItems = items.length > 0
 
@@ -74,7 +77,7 @@ function Checkout() {
     })
   }
 
-  const onSubmit = async (event) => {
+  const onSubmitShipping = async (event) => {
     event.preventDefault()
     setFormError('')
     const errors = validateForm(form, hasItems)
@@ -107,13 +110,21 @@ function Checkout() {
       sessionStorage.setItem('clio_last_reference', data.reference)
       sessionStorage.setItem('clio_clear_cart_on_paid', '1')
 
-      if (data.mode === 'simulate' || data.checkoutUrl.includes('/pago/simular')) {
-        const url = new URL(data.checkoutUrl, window.location.origin)
-        window.location.href = `${url.pathname}?${url.searchParams.toString()}`
+      if (data.mode === 'simulate' || data.simulatePayments) {
+        window.location.href =
+          data.checkoutUrl ||
+          `/pago/simular?reference=${encodeURIComponent(data.reference)}`
         return
       }
 
-      window.location.href = data.checkoutUrl
+      setPaymentSession({
+        reference: data.reference,
+        amount: data.amount ?? data.mercadopago?.amount,
+        publicKey: data.mercadopago?.publicKey,
+        currency: data.currency || data.mercadopago?.currency || 'COP',
+      })
+      setStep('pay')
+      setSubmitting(false)
     } catch (err) {
       setFormError(err.message || 'No pudimos iniciar el pago. Intenta de nuevo.')
       if (err.details) setFieldErrors(err.details)
@@ -121,13 +132,26 @@ function Checkout() {
     }
   }
 
+  const onPaymentSuccess = (result) => {
+    const reference =
+      result?.order?.reference || paymentSession?.reference || ''
+    if (result?.uiStatus === 'success' || result?.payment?.status === 'approved') {
+      if (sessionStorage.getItem('clio_clear_cart_on_paid')) {
+        clearCart()
+        sessionStorage.removeItem('clio_clear_cart_on_paid')
+      }
+    }
+    // Siempre salir del Brick (approved / rejected / pending) — no quedar colgado.
+    navigate(`/pago/resultado?reference=${encodeURIComponent(reference)}`)
+  }
+
   const securityNote = useMemo(
     () =>
-      'En el siguiente paso eliges crédito, débito, PSE o Nequi. CLIO no guarda datos sensibles de tarjeta.',
+      'Pagas con tarjeta dentro de CLIO (Mercado Pago Checkout API). No guardamos el número de tu tarjeta.',
     [],
   )
 
-  if (!hasItems) {
+  if (!hasItems && step === 'shipping') {
     return (
       <>
         <Navbar />
@@ -151,167 +175,229 @@ function Checkout() {
         <div className="checkout-page__inner">
           <header className="checkout-page__header">
             <p className="checkout-page__eyebrow">Checkout</p>
-            <h1>Datos de envío</h1>
+            <h1>{step === 'pay' ? 'Pago con tarjeta' : 'Datos de envío'}</h1>
             <p>
               {totalItems} {totalItems === 1 ? 'pieza' : 'piezas'} · Total{' '}
               <strong>{formatCop(totalPrice)}</strong>
+              {paymentSession?.reference ? (
+                <>
+                  {' '}
+                  · Pedido <strong>{paymentSession.reference}</strong>
+                </>
+              ) : null}
             </p>
           </header>
 
           <div className="checkout-page__layout">
-            <form className="checkout-page__form" onSubmit={onSubmit} noValidate>
-              <label>
-                Nombre completo
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={onChange}
-                  autoComplete="name"
-                  aria-invalid={Boolean(fieldErrors.name)}
-                />
-                {fieldErrors.name && (
-                  <span className="checkout-page__field-error">{fieldErrors.name}</span>
-                )}
-              </label>
-
-              <label>
-                Email
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={onChange}
-                  autoComplete="email"
-                  aria-invalid={Boolean(fieldErrors.email)}
-                />
-                {fieldErrors.email && (
-                  <span className="checkout-page__field-error">{fieldErrors.email}</span>
-                )}
-              </label>
-
-              <label>
-                Celular
-                <input
-                  type="tel"
-                  name="phone"
-                  value={form.phone}
-                  onChange={onChange}
-                  placeholder="3001234567"
-                  autoComplete="tel"
-                  aria-invalid={Boolean(fieldErrors.phone)}
-                />
-                {fieldErrors.phone && (
-                  <span className="checkout-page__field-error">{fieldErrors.phone}</span>
-                )}
-              </label>
-
-              <div className="checkout-page__row">
+            {step === 'shipping' ? (
+              <form
+                className="checkout-page__form"
+                onSubmit={onSubmitShipping}
+                noValidate
+              >
                 <label>
-                  Tipo de documento
-                  <select
-                    name="documentType"
-                    value={form.documentType}
+                  Nombre completo
+                  <input
+                    name="name"
+                    value={form.name}
                     onChange={onChange}
-                    aria-invalid={Boolean(fieldErrors.documentType)}
-                  >
-                    {DOCUMENT_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.documentType && (
+                    autoComplete="name"
+                    aria-invalid={Boolean(fieldErrors.name)}
+                  />
+                  {fieldErrors.name && (
                     <span className="checkout-page__field-error">
-                      {fieldErrors.documentType}
+                      {fieldErrors.name}
                     </span>
                   )}
                 </label>
 
                 <label>
-                  Número de documento
+                  Email
                   <input
-                    name="documentNumber"
-                    value={form.documentNumber}
+                    type="email"
+                    name="email"
+                    value={form.email}
                     onChange={onChange}
-                    autoComplete="off"
-                    aria-invalid={Boolean(fieldErrors.documentNumber)}
+                    autoComplete="email"
+                    aria-invalid={Boolean(fieldErrors.email)}
                   />
-                  {fieldErrors.documentNumber && (
+                  {fieldErrors.email && (
                     <span className="checkout-page__field-error">
-                      {fieldErrors.documentNumber}
+                      {fieldErrors.email}
                     </span>
                   )}
                 </label>
-              </div>
 
-              <label>
-                Dirección de envío
-                <textarea
-                  name="address"
-                  value={form.address}
-                  onChange={onChange}
-                  rows={3}
-                  autoComplete="street-address"
-                  aria-invalid={Boolean(fieldErrors.address)}
-                />
-                {fieldErrors.address && (
-                  <span className="checkout-page__field-error">{fieldErrors.address}</span>
+                <label>
+                  Celular
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={form.phone}
+                    onChange={onChange}
+                    placeholder="3001234567"
+                    autoComplete="tel"
+                    aria-invalid={Boolean(fieldErrors.phone)}
+                  />
+                  {fieldErrors.phone && (
+                    <span className="checkout-page__field-error">
+                      {fieldErrors.phone}
+                    </span>
+                  )}
+                </label>
+
+                <div className="checkout-page__row">
+                  <label>
+                    Tipo de documento
+                    <select
+                      name="documentType"
+                      value={form.documentType}
+                      onChange={onChange}
+                      aria-invalid={Boolean(fieldErrors.documentType)}
+                    >
+                      {DOCUMENT_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.documentType && (
+                      <span className="checkout-page__field-error">
+                        {fieldErrors.documentType}
+                      </span>
+                    )}
+                  </label>
+
+                  <label>
+                    Número de documento
+                    <input
+                      name="documentNumber"
+                      value={form.documentNumber}
+                      onChange={onChange}
+                      autoComplete="off"
+                      aria-invalid={Boolean(fieldErrors.documentNumber)}
+                    />
+                    {fieldErrors.documentNumber && (
+                      <span className="checkout-page__field-error">
+                        {fieldErrors.documentNumber}
+                      </span>
+                    )}
+                  </label>
+                </div>
+
+                <label>
+                  Dirección de envío
+                  <textarea
+                    name="address"
+                    value={form.address}
+                    onChange={onChange}
+                    rows={3}
+                    autoComplete="street-address"
+                    aria-invalid={Boolean(fieldErrors.address)}
+                  />
+                  {fieldErrors.address && (
+                    <span className="checkout-page__field-error">
+                      {fieldErrors.address}
+                    </span>
+                  )}
+                </label>
+
+                <div className="checkout-page__row">
+                  <label>
+                    Ciudad
+                    <input
+                      name="city"
+                      value={form.city}
+                      onChange={onChange}
+                      autoComplete="address-level2"
+                      aria-invalid={Boolean(fieldErrors.city)}
+                    />
+                    {fieldErrors.city && (
+                      <span className="checkout-page__field-error">
+                        {fieldErrors.city}
+                      </span>
+                    )}
+                  </label>
+                  <label>
+                    Departamento
+                    <input
+                      name="region"
+                      value={form.region}
+                      onChange={onChange}
+                      autoComplete="address-level1"
+                      aria-invalid={Boolean(fieldErrors.region)}
+                    />
+                    {fieldErrors.region && (
+                      <span className="checkout-page__field-error">
+                        {fieldErrors.region}
+                      </span>
+                    )}
+                  </label>
+                </div>
+
+                {formError && (
+                  <p className="checkout-page__error" role="alert">
+                    {formError}
+                  </p>
                 )}
-              </label>
 
-              <div className="checkout-page__row">
-                <label>
-                  Ciudad
-                  <input
-                    name="city"
-                    value={form.city}
-                    onChange={onChange}
-                    autoComplete="address-level2"
-                    aria-invalid={Boolean(fieldErrors.city)}
-                  />
-                  {fieldErrors.city && (
-                    <span className="checkout-page__field-error">{fieldErrors.city}</span>
-                  )}
-                </label>
-                <label>
-                  Departamento
-                  <input
-                    name="region"
-                    value={form.region}
-                    onChange={onChange}
-                    autoComplete="address-level1"
-                    aria-invalid={Boolean(fieldErrors.region)}
-                  />
-                  {fieldErrors.region && (
-                    <span className="checkout-page__field-error">{fieldErrors.region}</span>
-                  )}
-                </label>
-              </div>
+                <p className="checkout-page__security">{securityNote}</p>
 
-              {formError && (
-                <p className="checkout-page__error" role="alert">
-                  {formError}
+                <button
+                  className="checkout-page__pay"
+                  type="submit"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Preparando pago…' : 'Continuar al pago'}
+                </button>
+                <button
+                  className="checkout-page__back"
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  disabled={submitting}
+                >
+                  Volver
+                </button>
+              </form>
+            ) : (
+              <div className="checkout-page__form">
+                <p className="checkout-page__security">{securityNote}</p>
+                <p className="checkout-page__mp-hint">
+                  Prueba TEST Colombia — Visa <code>4013 5406 8274 6260</code>, CVV{' '}
+                  <code>123</code>, venc. <code>11/30</code>, titular <code>APRO</code>{' '}
+                  (aprueba) u <code>OTHE</code> (rechaza), doc. <code>123456789</code>.
                 </p>
-              )}
-
-              <p className="checkout-page__security">{securityNote}</p>
-
-              <button
-                className="checkout-page__pay"
-                type="submit"
-                disabled={submitting}
-              >
-                {submitting ? 'Continuando…' : 'Pagar'}
-              </button>
-              <button
-                className="checkout-page__back"
-                type="button"
-                onClick={() => navigate(-1)}
-                disabled={submitting}
-              >
-                Volver
-              </button>
-            </form>
+                {formError && (
+                  <p className="checkout-page__error" role="alert">
+                    {formError}
+                  </p>
+                )}
+                <MercadoPagoCardBrick
+                  publicKey={paymentSession?.publicKey}
+                  amount={paymentSession?.amount}
+                  reference={paymentSession?.reference}
+                  payerEmail={form.email.trim().toLowerCase()}
+                  payerIdentification={{
+                    type: form.documentType,
+                    number: form.documentNumber.trim(),
+                  }}
+                  onSuccess={onPaymentSuccess}
+                  onError={(err) =>
+                    setFormError(err?.message || 'Error al procesar el pago.')
+                  }
+                />
+                <button
+                  className="checkout-page__back"
+                  type="button"
+                  onClick={() => {
+                    setStep('shipping')
+                    setFormError('')
+                  }}
+                >
+                  Volver a datos de envío
+                </button>
+              </div>
+            )}
 
             <aside className="checkout-page__summary">
               <h2>Tu pedido</h2>
@@ -333,7 +419,7 @@ function Checkout() {
                 <strong>{formatCop(totalPrice)}</strong>
               </div>
               <p className="checkout-page__methods">
-                En el siguiente paso: crédito, débito, PSE o Nequi.
+                Checkout API · tarjeta dentro de la tienda
               </p>
             </aside>
           </div>

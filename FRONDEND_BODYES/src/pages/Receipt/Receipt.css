@@ -105,6 +105,24 @@
   text-transform: uppercase;
 }
 
+.receipt-page__wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.25rem;
+  border-radius: 0.45rem;
+  background: #25d366;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.receipt-page__wa:hover {
+  background: #1ebe57;
+}
+
 .receipt-page__missing h1 {
   font-family: var(--font-display);
 }

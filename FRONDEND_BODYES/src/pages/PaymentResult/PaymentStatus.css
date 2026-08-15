@@ -73,10 +73,19 @@
 .payment-status__cta {
   background: var(--color-terracotta);
   color: #fff;
+  text-decoration: none;
 }
 
 .payment-status__cta:hover {
   background: var(--color-terracotta-hover);
+}
+
+.payment-status__cta--wa {
+  background: #25d366;
+}
+
+.payment-status__cta--wa:hover {
+  background: #1ebe57;
 }
 
 .payment-status__ghost {

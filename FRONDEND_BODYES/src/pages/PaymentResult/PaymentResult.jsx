@@ -81,8 +81,8 @@ function PaymentResult() {
               </p>
               <h1>¡Gracias por tu compra!</h1>
               <p>
-                Tu pedido <strong>{order?.reference}</strong> fue confirmado.
-                Enviamos el comprobante a tu correo y WhatsApp.
+                Tu pedido <strong>{order?.reference}</strong> ya está confirmado.
+                Te enviamos el comprobante por correo y WhatsApp.
               </p>
               <div className="payment-status__actions">
                 <Link

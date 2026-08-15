@@ -13,7 +13,7 @@ export const env = {
   mercadoPago: {
     accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
     publicKey: process.env.MERCADOPAGO_PUBLIC_KEY || '',
-    /** test | production — usa sandbox_init_point si es test */
+    /** test | production */
     env: process.env.MERCADOPAGO_ENV || 'test',
   },
   email: {
@@ -28,15 +28,20 @@ export const env = {
     },
   },
   whatsapp: {
+    /** Número de la empresa en WhatsApp (solo dígitos, con 57). Ej: 573001234567 */
+    storePhone: String(process.env.STORE_WHATSAPP || '')
+      .replace(/\D/g, '')
+      .replace(/^0+/, ''),
+    /** Legacy Cloud API — ya no se usa para envío automático */
     token: process.env.WHATSAPP_TOKEN || '',
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
     apiVersion: process.env.WHATSAPP_API_VERSION || 'v21.0',
   },
-  /** Si true (o faltan claves MP en development), permite simular pago local */
-  simulatePayments:
-    process.env.SIMULATE_PAYMENTS === 'true' ||
-    (process.env.NODE_ENV !== 'production' &&
-      !process.env.MERCADOPAGO_ACCESS_TOKEN),
+  /**
+   * Solo si SIMULATE_PAYMENTS=true (escape hatch).
+   * Por defecto el backend exige Mercado Pago siempre activo.
+   */
+  simulatePayments: process.env.SIMULATE_PAYMENTS === 'true',
   jwt: {
     secret: process.env.JWT_SECRET || 'change_this_secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',

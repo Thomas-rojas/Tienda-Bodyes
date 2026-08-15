@@ -8,6 +8,7 @@ import {
   getProductsByIds,
   tablesReady,
 } from './products.service.js'
+import { getOrderWhatsAppLinks } from './whatsapp.service.js'
 
 export async function createPendingOrder({ customer, items }) {
   const productIds = items.map((i) => i.productId)
@@ -393,7 +394,7 @@ export async function listOrders({ status = 'paid' } = {}) {
 
 function serializeOrder(order, items) {
   const pesos = Math.round(order.amount_cents / 100)
-  return {
+  const mapped = {
     id: order.id,
     reference: order.reference,
     status: order.status,
@@ -428,4 +429,9 @@ function serializeOrder(order, items) {
       }
     }),
   }
+
+  const wa = getOrderWhatsAppLinks(mapped)
+  mapped.whatsappUrl = wa.customerUrl
+  mapped.whatsappStoreUrl = wa.storeUrl
+  return mapped
 }

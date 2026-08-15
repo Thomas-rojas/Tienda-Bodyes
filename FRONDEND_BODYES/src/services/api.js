@@ -52,6 +52,13 @@ export function createCheckoutSession(payload) {
   })
 }
 
+export function processMercadoPagoCardPayment(payload) {
+  return request('/api/payments/mercadopago/process', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
 export function fetchOrderByReference(reference) {
   return request(`/api/orders/by-reference/${encodeURIComponent(reference)}`)
 }

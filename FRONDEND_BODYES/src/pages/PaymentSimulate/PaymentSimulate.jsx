@@ -78,6 +78,52 @@ function formatCardNumber(value) {
     .trim()
 }
 
+function resolveSimulateOutcome(method, fields) {
+  // Igual que sandbox MP: el nombre del titular decide el resultado.
+  if (method === 'CREDIT_CARD' || method === 'DEBIT_CARD') {
+    const code = String(fields.cardName || '')
+      .trim()
+      .toUpperCase()
+      .split(/\s+/)[0]
+
+    if (code === 'APRO') return 'APPROVED'
+    if (
+      [
+        'OTHE',
+        'FUND',
+        'SECU',
+        'EXPI',
+        'FORM',
+        'CARD',
+        'INST',
+        'DUPL',
+        'LOCK',
+        'CTNA',
+        'ATTE',
+        'BLAC',
+        'CALL',
+        'UNSU',
+        'TEST',
+      ].includes(code)
+    ) {
+      return 'DECLINED'
+    }
+    // Si escriben un nombre real u otro texto, se aprueba (prueba local cómoda).
+    return 'APPROVED'
+  }
+
+  // PSE / Nequi: por defecto aprueba; usa "rechazar" en el banco/doc para fallar.
+  if (method === 'PSE') {
+    const doc = String(fields.pseDocument || '').trim().toUpperCase()
+    if (doc === 'OTHE' || doc === 'REJECT' || doc === 'DECLINED') return 'DECLINED'
+  }
+  if (method === 'NEQUI') {
+    const phone = onlyDigits(fields.nequiPhone)
+    if (phone.endsWith('0000')) return 'DECLINED'
+  }
+  return 'APPROVED'
+}
+
 function validatePaymentFields(method, fields) {
   const errors = {}
 
@@ -256,8 +302,9 @@ function PaymentSimulate() {
     setBusy(true)
     setError('')
     try {
+      const outcome = resolveSimulateOutcome(method, fields)
       sessionStorage.setItem('clio_pay_method', method)
-      await simulatePayment(reference, 'APPROVED', method)
+      await simulatePayment(reference, outcome, method)
       setFields((current) => ({
         ...current,
         cardNumber: '',
@@ -277,9 +324,14 @@ function PaymentSimulate() {
       <main className="nike-pay">
         <div className="nike-pay__shell">
           <header className="nike-pay__header">
-            <p className="nike-pay__step">Paso 2 de 2</p>
+            <p className="nike-pay__step">Paso 2 de 2 · Simulador local</p>
             <h1>¿Cómo quieres pagar?</h1>
             <p className="nike-pay__ref">Pedido {reference || '—'}</p>
+            <p className="nike-pay__hint">
+              Prueba resultados con el <strong>nombre del titular</strong>:{' '}
+              <code>APRO</code> aprueba · <code>OTHE</code> / <code>FUND</code> rechaza.
+              Tarjeta de prueba: 5254 1336 7440 3564 · CVV 123 · 11/30
+            </p>
           </header>
 
           <form className="nike-pay__form" onSubmit={onPay} noValidate>

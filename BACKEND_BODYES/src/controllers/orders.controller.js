@@ -1,5 +1,6 @@
 import { AppError } from '../middleware/errorHandler.js'
 import { getOrderByReference } from '../services/orders.service.js'
+import { getEmailTransportStatus } from '../services/email.service.js'
 import { env } from '../config/env.js'
 
 function mapOrderUiStatus(status) {
@@ -18,7 +19,8 @@ export async function getOrderReceipt(req, res) {
     order,
     notifications: {
       simulated:
-        (!env.email.resendApiKey || !env.whatsapp.token) &&
+        !getEmailTransportStatus().configured &&
+        !env.whatsapp.storePhone &&
         order.status === 'paid',
     },
   })

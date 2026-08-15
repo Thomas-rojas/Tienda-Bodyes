@@ -50,6 +50,7 @@ function AdminProducts() {
   const [deletingId, setDeletingId] = useState('')
   const [uploadingId, setUploadingId] = useState('')
   const [creating, setCreating] = useState(false)
+  const [showHidden, setShowHidden] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -182,7 +183,7 @@ function AdminProducts() {
 
   const onDelete = async (product) => {
     const ok = window.confirm(
-      `¿Eliminar “${product.name}”? Esta acción no se puede deshacer.`,
+      `¿Eliminar “${product.name}”? Si ya tuvo ventas, se ocultará de la tienda.`,
     )
     if (!ok) return
 
@@ -190,14 +191,18 @@ function AdminProducts() {
     setMessage('')
     setError('')
     try {
-      await deleteAdminProduct(product.id)
+      const data = await deleteAdminProduct(product.id)
       setProducts((current) => current.filter((item) => item.id !== product.id))
       setDrafts((current) => {
         const next = { ...current }
         delete next[product.id]
         return next
       })
-      setMessage(`Eliminado: ${product.name}`)
+      setMessage(
+        data.softDeleted
+          ? `“${product.name}” tenía ventas: se ocultó de la tienda y salió del panel.`
+          : `Eliminado: ${product.name}`,
+      )
     } catch (err) {
       setError(err.message || 'No se pudo eliminar')
     } finally {
@@ -366,6 +371,15 @@ function AdminProducts() {
       {message && <p className="admin__ok">{message}</p>}
       {error && <p className="admin__error">{error}</p>}
 
+      <label className="admin-card__check admin-products__filter">
+        <input
+          type="checkbox"
+          checked={showHidden}
+          onChange={(e) => setShowHidden(e.target.checked)}
+        />
+        Mostrar productos ocultos
+      </label>
+
       <form className="admin-card admin-card--new" onSubmit={onCreate}>
         <div className="admin-card__media">
           {newPreview ? (
@@ -387,7 +401,9 @@ function AdminProducts() {
         <p>Cargando colección…</p>
       ) : (
         <div className="admin-products">
-          {products.map((product) => {
+          {products
+            .filter((product) => showHidden || product.active !== false)
+            .map((product) => {
             const draft = drafts[product.id] || emptyDraft(product)
             return (
               <article key={product.id} className="admin-card">

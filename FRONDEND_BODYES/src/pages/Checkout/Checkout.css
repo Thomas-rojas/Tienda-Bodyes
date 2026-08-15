@@ -196,6 +196,17 @@
   transform: translateY(-1px);
 }
 
+.checkout-page__mp-hint {
+  margin: 0.45rem 0 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.checkout-page__mp-hint code {
+  font-size: 0.85em;
+}
+
 .checkout-page__back {
   margin-top: 0.35rem;
   color: var(--color-muted);

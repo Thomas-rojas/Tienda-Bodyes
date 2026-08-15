@@ -342,7 +342,7 @@ export async function deleteProduct(id) {
     const index = store.products.findIndex((p) => p.id === productId)
     if (index < 0) throw new AppError('Producto no encontrado', 404)
     store.products.splice(index, 1)
-    return { id: productId }
+    return { id: productId, softDeleted: false }
   }
 
   const { data, error } = await supabase
@@ -357,16 +357,18 @@ export async function deleteProduct(id) {
       useMemory = true
       return deleteProduct(productId)
     }
-    if (error.code === '23503') {
-      throw new AppError(
-        'No se puede eliminar porque ya tiene ventas. Ocúltalo de la tienda.',
-        409,
-      )
+    const isFk =
+      error.code === '23503' ||
+      /foreign key|violates foreign/i.test(String(error.message || ''))
+    if (isFk) {
+      // Tiene ventas: no se borra el historial; se oculta de la tienda.
+      const hidden = await updateProduct(productId, { active: false })
+      return { id: productId, softDeleted: true, product: hidden }
     }
     throw new AppError(error.message, 502)
   }
   if (!data) throw new AppError('Producto no encontrado', 404)
-  return { id: productId }
+  return { id: productId, softDeleted: false }
 }
 
 export { getMemoryStore, tablesReady }

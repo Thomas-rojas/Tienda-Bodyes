@@ -39,6 +39,21 @@
   font-weight: 300;
 }
 
+.nike-pay__hint {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 0.85rem;
+  background: #f7f3ef;
+  border: 1px solid var(--color-border, #e8ddd4);
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.nike-pay__hint code {
+  font-size: 0.8rem;
+  color: var(--color-ink);
+}
+
 .nike-pay__form {
   display: grid;
   gap: 1rem;

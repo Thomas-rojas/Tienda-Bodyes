@@ -121,10 +121,16 @@ function Receipt() {
                 )}
               </section>
 
+              {order.status === 'paid' && (
+                <p className="receipt-page__note">
+                  Te enviamos la confirmación por correo y WhatsApp.
+                </p>
+              )}
+
               {state.notifications?.simulated && order.status === 'paid' && (
                 <p className="receipt-page__note">
-                  Modo desarrollo: correo/WhatsApp simulados (revisa logs del
-                  backend o configura Resend y WhatsApp Cloud API).
+                  Modo desarrollo: configura correo (SMTP/Resend) y STORE_WHATSAPP
+                  en el backend para notificaciones completas.
                 </p>
               )}
 

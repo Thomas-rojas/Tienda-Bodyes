@@ -25,3 +25,6 @@ Thumbs.db
 # Uploads (runtime)
 BACKEND_BODYES/uploads/*
 !BACKEND_BODYES/uploads/.gitkeep
+
+# WhatsApp Web session (no subir)
+BACKEND_BODYES/whatsapp-auth/

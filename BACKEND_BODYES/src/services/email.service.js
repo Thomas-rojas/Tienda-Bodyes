@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer'
 import { env } from '../config/env.js'
 import { formatCop } from '../utils/validate.js'
+import {
+  buildCustomerWhatsAppUrl,
+  buildStoreWhatsAppUrl,
+} from './whatsapp.service.js'
 
 function buildItemsHtml(order) {
   return order.items
@@ -93,6 +97,8 @@ export async function sendOrderConfirmationEmail(order) {
   const total = order.amountFormatted || formatCop(order.amountPesos)
   const itemsHtml = buildItemsHtml(order)
   const link = receiptUrl(order)
+  const customerWa = buildCustomerWhatsAppUrl(order)
+  const storeWa = buildStoreWhatsAppUrl(order)
   const transport = getEmailTransportStatus()
 
   if (!transport.configured) {
@@ -119,6 +125,12 @@ export async function sendOrderConfirmationEmail(order) {
       <table style="width:100%;border-collapse:collapse;margin:24px 0">${itemsHtml}</table>
       <p style="font-size:18px"><strong>Total:</strong> ${total}</p>
       <p><a href="${link}">Ver comprobante</a></p>
+      ${
+        customerWa
+          ? `<p style="margin-top:28px"><a href="${customerWa}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px;border-radius:6px">Escribir a CLIO por WhatsApp</a></p>
+      <p style="color:#7a5c52;font-size:13px">Tu compra ya está confirmada con el pago. WhatsApp es opcional si quieres contactarnos.</p>`
+          : ''
+      }
       <p style="color:#7a5c52;font-size:13px">Envío a: ${order.customer.address}, ${order.customer.city}, ${order.customer.region}</p>
     </div>
   `
@@ -135,7 +147,7 @@ export async function sendOrderConfirmationEmail(order) {
       <div style="font-family:Georgia,serif;color:#3b2a24;max-width:560px;margin:0 auto">
         <p style="letter-spacing:.2em;text-transform:uppercase;color:#c4788c;font-size:12px">CLIO · Venta</p>
         <h1 style="font-weight:600">Nueva compra pagada</h1>
-        <p>Se recibió el dinero de un pedido.</p>
+        <p>Se recibió el dinero de un pedido. La compra ya está hecha aunque el cliente no escriba por WhatsApp.</p>
         <p><strong>Referencia:</strong> ${order.reference}</p>
         <p><strong>Cliente:</strong> ${order.customer.name}</p>
         <p><strong>Correo:</strong> ${order.customer.email}</p>
@@ -145,6 +157,12 @@ export async function sendOrderConfirmationEmail(order) {
         <p style="font-size:18px"><strong>Total recibido:</strong> ${total}</p>
         <p><strong>Envío:</strong> ${order.customer.address}, ${order.customer.city}, ${order.customer.region}</p>
         <p><a href="${link}">Ver comprobante</a></p>
+        ${
+          storeWa
+            ? `<p style="margin-top:28px"><a href="${storeWa}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px;border-radius:6px">Avisar al cliente por WhatsApp</a></p>
+        <p style="color:#7a5c52;font-size:13px">Abre el chat con el mensaje de “compra confirmada” listo para enviar.</p>`
+            : ''
+        }
       </div>
     `
 

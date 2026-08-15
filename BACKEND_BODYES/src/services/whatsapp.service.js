@@ -1,133 +1,189 @@
 import { env } from '../config/env.js'
+import {
+  connectWhatsAppWeb,
+  getWhatsAppWebStatus,
+  sendWhatsAppWebText,
+} from './whatsapp-web.session.js'
 
-function toE164Colombia(phone) {
-  const digits = String(phone || '').replace(/\D/g, '')
-  if (digits.startsWith('57') && digits.length === 12) return `+${digits}`
-  if (digits.length === 10) return `+57${digits}`
-  if (String(phone || '').trim().startsWith('+')) {
-    return `+${digits}`
-  }
-  return digits ? `+${digits}` : digits
+function digitsOnly(phone) {
+  return String(phone || '').replace(/\D/g, '')
+}
+
+/** Normaliza a dígitos internacionales CO (57…) */
+export function toWaMePhone(phone) {
+  let digits = digitsOnly(phone)
+  if (!digits) return ''
+  if (digits.startsWith('57') && digits.length >= 12) return digits
+  if (digits.length === 10) return `57${digits}`
+  return digits
 }
 
 function summarizeProducts(order) {
   const items = order.items || []
   if (items.length === 0) return 'Pedido CLIO'
-  return items
-    .map((item) => `${item.name} x${item.quantity}`)
-    .join(', ')
-    .slice(0, 200)
+  return items.map((item) => `${item.name} x${item.quantity}`).join(', ')
 }
 
-async function sendWhatsAppPayload(to, payload) {
-  const url = `https://graph.facebook.com/${env.whatsapp.apiVersion}/${env.whatsapp.phoneNumberId}/messages`
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.whatsapp.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to,
-      ...payload,
-    }),
-  })
-  const detail = await response.text()
-  let json = null
-  try {
-    json = JSON.parse(detail)
-  } catch {
-    json = null
+function receiptUrl(order) {
+  return `${env.frontendUrl}/comprobante/${encodeURIComponent(order.reference)}`
+}
+
+function buildWaMeUrl(phone, text) {
+  const to = toWaMePhone(phone)
+  if (!to) return null
+  return `https://wa.me/${to}?text=${encodeURIComponent(text)}`
+}
+
+/** Texto al cliente (equivalente al correo de confirmación). */
+export function buildCustomerMessage(order) {
+  const name = order.customer?.name || 'Cliente'
+  const reference = order.reference || ''
+  const total = order.amountFormatted || ''
+  const products = summarizeProducts(order)
+  const link = receiptUrl(order)
+
+  return [
+    `Hola ${name}, te escribe CLIO.`,
+    ``,
+    `Tu compra ya está confirmada. El pago se recibió correctamente.`,
+    `Referencia: ${reference}`,
+    `Total: ${total}`,
+    `Productos: ${products}`,
+    `Comprobante: ${link}`,
+    ``,
+    `Envío: ${order.customer?.address || ''}, ${order.customer?.city || ''}, ${order.customer?.region || ''}`,
+    ``,
+    `Cualquier duda sobre tu pedido, responde este mensaje.`,
+  ].join('\n')
+}
+
+/** Texto a la tienda (equivalente al correo de nueva venta). */
+export function buildStoreMessage(order) {
+  const name = order.customer?.name || 'Cliente'
+  const reference = order.reference || ''
+  const total = order.amountFormatted || ''
+  const products = summarizeProducts(order)
+  const link = receiptUrl(order)
+
+  return [
+    `CLIO · Nueva venta pagada`,
+    ``,
+    `Referencia: ${reference}`,
+    `Cliente: ${name}`,
+    `Correo: ${order.customer?.email || ''}`,
+    `Teléfono: ${order.customer?.phone || ''}`,
+    `Total: ${total}`,
+    `Productos: ${products}`,
+    `Envío: ${order.customer?.address || ''}, ${order.customer?.city || ''}, ${order.customer?.region || ''}`,
+    `Comprobante: ${link}`,
+  ].join('\n')
+}
+
+export function buildCustomerWhatsAppUrl(order) {
+  const store = env.whatsapp.storePhone
+  if (!store) return null
+  const text = [
+    `Hola CLIO, consulta sobre mi pedido.`,
+    ``,
+    `Referencia: ${order.reference || ''}`,
+    `Nombre: ${order.customer?.name || ''}`,
+  ].join('\n')
+  return buildWaMeUrl(store, text)
+}
+
+export function buildStoreWhatsAppUrl(order) {
+  const customerPhone = order.customer?.phone
+  if (!customerPhone) return null
+  return buildWaMeUrl(customerPhone, buildCustomerMessage(order))
+}
+
+export function getOrderWhatsAppLinks(order) {
+  return {
+    customerUrl: buildCustomerWhatsAppUrl(order),
+    storeUrl: buildStoreWhatsAppUrl(order),
   }
-  return { ok: response.ok, status: response.status, detail, json }
 }
 
 /**
- * Confirmación de compra CLIO por WhatsApp (solo paid).
- *
- * Importante: en el número de prueba Meta, el texto libre NO se entrega al celular
- * (solo queda accepted). Hay que usar plantillas APPROVED.
+ * Envía WhatsApp automático (como el correo):
+ * 1) Confirmación al cliente
+ * 2) Aviso a la empresa (STORE_WHATSAPP)
  */
 export async function sendOrderConfirmationWhatsApp(order) {
-  if (!env.whatsapp.token || !env.whatsapp.phoneNumberId) {
-    console.info('[whatsapp] Simulado (sin WHATSAPP_TOKEN / PHONE_NUMBER_ID)', {
-      to: order.customer.phone,
-      reference: order.reference,
-    })
-    return { ok: true, simulated: true }
-  }
+  const links = getOrderWhatsAppLinks(order)
+  const status = getWhatsAppWebStatus()
+  const customerPhone = toWaMePhone(order.customer?.phone)
+  const storePhone = env.whatsapp.storePhone
 
-  const to = toE164Colombia(order.customer.phone)
-  const name = String(order.customer.name || 'Cliente').slice(0, 60)
-  const reference = String(order.reference || '').slice(0, 60)
-  const total = String(order.amountFormatted || '').slice(0, 60)
-  const products = summarizeProducts(order)
-  const receiptUrl = `${env.frontendUrl}/comprobante/${encodeURIComponent(order.reference)}`.slice(
-    0,
-    200,
-  )
-
-  // 1) Plantilla completa CLIO
-  let result = await sendWhatsAppPayload(to, {
-    type: 'template',
-    template: {
-      name: 'clio_confirmacion_compra',
-      language: { code: 'es' },
-      components: [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: name },
-            { type: 'text', text: reference },
-            { type: 'text', text: total },
-            { type: 'text', text: products },
-            { type: 'text', text: receiptUrl },
-          ],
-        },
-      ],
-    },
-  })
-
-  // 2) Plantilla corta CLIO
-  if (!result.ok) {
-    console.warn('[whatsapp] clio_confirmacion_compra no disponible, intento clio_pedido_pagado', result.detail)
-    result = await sendWhatsAppPayload(to, {
-      type: 'template',
-      template: {
-        name: 'clio_pedido_pagado',
-        language: { code: 'es' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: name },
-              { type: 'text', text: reference },
-              { type: 'text', text: total },
-            ],
-          },
-        ],
-      },
-    })
-  }
-
-  if (!result.ok) {
-    console.error(
-      '[whatsapp] Plantillas CLIO pendientes/rechazadas. Aprueba clio_confirmacion_compra o clio_pedido_pagado en Meta.',
-      result.detail,
+  if (!status.connected && !status.hasAuth) {
+    console.warn(
+      '[whatsapp] Sin sesión WhatsApp Web. Ejecuta: npm run whatsapp:link',
+      { reference: order.reference },
     )
-    return { ok: false, simulated: false, detail: result.detail }
+    return {
+      ok: false,
+      mode: 'wa_web',
+      simulated: true,
+      detail: 'WhatsApp Web no vinculado. npm run whatsapp:link',
+      ...links,
+      customer: false,
+      store: false,
+    }
   }
 
-  console.info('[whatsapp] Confirmación CLIO (plantilla) aceptada', {
-    to,
-    reference,
-    messageId: result.json?.messages?.[0]?.id,
-  })
+  try {
+    await connectWhatsAppWeb({ printQr: false })
+  } catch (err) {
+    console.error('[whatsapp] No se pudo abrir sesión', err.message)
+    return {
+      ok: false,
+      mode: 'wa_web',
+      simulated: false,
+      detail: err.message,
+      ...links,
+      customer: false,
+      store: false,
+    }
+  }
 
+  let customerResult = { ok: false, skipped: !customerPhone }
+  let storeResult = { ok: false, skipped: !storePhone }
+
+  if (customerPhone) {
+    try {
+      await sendWhatsAppWebText(customerPhone, buildCustomerMessage(order))
+      customerResult = { ok: true }
+      console.info('[whatsapp] Confirmación enviada al cliente', {
+        to: customerPhone,
+        reference: order.reference,
+      })
+    } catch (err) {
+      customerResult = { ok: false, detail: err.message }
+      console.error('[whatsapp] Falló mensaje al cliente', err.message)
+    }
+  }
+
+  if (storePhone) {
+    try {
+      await sendWhatsAppWebText(storePhone, buildStoreMessage(order))
+      storeResult = { ok: true }
+      console.info('[whatsapp] Aviso enviado a la tienda', {
+        to: storePhone,
+        reference: order.reference,
+      })
+    } catch (err) {
+      storeResult = { ok: false, detail: err.message }
+      console.error('[whatsapp] Falló mensaje a la tienda', err.message)
+    }
+  }
+
+  const ok = Boolean(customerResult.ok || storeResult.ok)
   return {
-    ok: true,
+    ok,
+    mode: 'wa_web',
     simulated: false,
-    messageId: result.json?.messages?.[0]?.id,
+    customer: customerResult,
+    store: storeResult,
+    ...links,
   }
 }
