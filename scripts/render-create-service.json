@@ -1,0 +1,19 @@
+{
+  "type": "web_service",
+  "name": "clio-bodyes-api",
+  "ownerId": "tea-daaevplg1s2s73d02n8g",
+  "repo": "https://github.com/Thomas-rojas/Tienda-Bodyes",
+  "branch": "main",
+  "rootDir": "BACKEND_BODYES",
+  "autoDeploy": "yes",
+  "serviceDetails": {
+    "env": "node",
+    "plan": "free",
+    "region": "oregon",
+    "healthCheckPath": "/api/health",
+    "envSpecificDetails": {
+      "buildCommand": "npm ci",
+      "startCommand": "npm start"
+    }
+  }
+}
