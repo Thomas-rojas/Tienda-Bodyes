@@ -1,0 +1,40 @@
+# Despliegue del backend en Render (https://render.com)
+# El frontend va en Netlify; conecta FRONTEND_URL a tu sitio Netlify.
+
+services:
+  - type: web
+    name: clio-backend
+    runtime: node
+    rootDir: BACKEND_BODYES
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: MERCADOPAGO_ENV
+        value: production
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: STORE_EMAIL
+        sync: false
+      - key: STORE_WHATSAPP
+        sync: false

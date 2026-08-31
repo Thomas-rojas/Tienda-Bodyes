@@ -17,7 +17,20 @@ const app = express()
 
 app.use(
   cors({
-    origin: env.frontendUrl,
+    origin: (origin, callback) => {
+      const allowed = new Set(
+        String(env.frontendUrl || '')
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean),
+      )
+      // Peticiones sin Origin (health checks, webhooks server-side)
+      if (!origin || allowed.has(origin)) {
+        callback(null, true)
+        return
+      }
+      callback(new Error(`CORS bloqueado para: ${origin}`))
+    },
     credentials: true,
   }),
 )

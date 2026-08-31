@@ -3,6 +3,11 @@
 Frontend: `FRONDEND_BODYES` (Vite + React)  
 Backend: `BACKEND_BODYES` (Express + Supabase + Mercado Pago)
 
+## Producción
+
+- **Frontend → Netlify:** [`docs/DEPLOY-NETLIFY.md`](docs/DEPLOY-NETLIFY.md)
+- **Backend → Render/Railway:** `BACKEND_BODYES/render.yaml` (ejemplo Render)
+
 ## Arranque rápido
 
 ```bash

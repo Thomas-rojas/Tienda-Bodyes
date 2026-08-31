@@ -1,0 +1,28 @@
+# Despliegue del frontend CLIO (Vite + React)
+# Conecta este repo en Netlify; el backend va aparte (Render/Railway/etc.).
+
+[build]
+  base = "FRONDEND_BODYES"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# React Router: todas las rutas sirven index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
