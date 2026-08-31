@@ -1,8 +1,8 @@
 .checkout-page {
   min-height: calc(100svh - var(--nav-height));
   background:
-    radial-gradient(circle at 10% 0%, rgba(255, 214, 224, 0.28), transparent 42%),
-    var(--color-surface);
+    radial-gradient(circle at 10% 0%, rgba(247, 198, 217, 0.08), transparent 42%),
+    var(--color-bg);
   padding: 2.25rem 0 4rem;
 }
 
@@ -18,7 +18,7 @@
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #c4788c;
+  color: var(--color-pink);
 }
 
 .checkout-page__header h1,
@@ -27,7 +27,7 @@
   margin: 0.5rem 0 0;
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 2.7rem);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .checkout-page__header p,
@@ -36,7 +36,7 @@
   margin: 0.7rem 0 0;
   font-size: 0.95rem;
   font-weight: 300;
-  color: var(--color-muted);
+  color: var(--color-cream-muted);
 }
 
 .checkout-page__layout {
@@ -54,32 +54,34 @@
   display: grid;
   gap: 0.4rem;
   font-size: 0.85rem;
-  color: var(--color-muted);
+  color: var(--color-cream-muted);
 }
 
 .checkout-page__form input,
 .checkout-page__form textarea,
 .checkout-page__form select {
   width: 100%;
-  border: 1px solid rgba(122, 74, 58, 0.18);
-  border-radius: 0.45rem;
-  background: #fffaf7;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
   padding: 0.85rem 0.95rem;
   font: inherit;
-  color: var(--color-ink);
+  color: var(--color-cream);
   outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .checkout-page__form input:focus,
 .checkout-page__form textarea:focus,
 .checkout-page__form select:focus {
-  border-color: rgba(122, 74, 58, 0.45);
+  border-color: var(--color-pink);
+  box-shadow: 0 0 0 3px var(--color-pink-soft);
 }
 
 .checkout-page__form input[aria-invalid='true'],
 .checkout-page__form textarea[aria-invalid='true'],
 .checkout-page__form select[aria-invalid='true'] {
-  border-color: rgba(155, 59, 59, 0.55);
+  border-color: var(--color-cta);
 }
 
 .checkout-page__row {
@@ -89,7 +91,7 @@
 
 .checkout-page__field-error,
 .checkout-page__error {
-  color: #9b3b3b;
+  color: var(--color-cta);
   font-size: 0.8rem;
 }
 
@@ -115,7 +117,7 @@
   padding: 0;
   margin: 0 0 0.65rem;
   font-size: 0.85rem;
-  color: var(--color-muted);
+  color: var(--color-cream-muted);
 }
 
 .checkout-page__methods-list {
@@ -129,27 +131,28 @@
   gap: 0.75rem;
   align-items: start;
   padding: 0.8rem 0.9rem;
-  border: 1px solid rgba(122, 74, 58, 0.18);
-  border-radius: 0.45rem;
-  background: #fffaf7;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
   cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
 }
 
 .checkout-page__method.is-selected {
-  border-color: var(--color-terracotta);
-  background: rgba(196, 120, 100, 0.08);
+  border-color: var(--color-pink);
+  background: var(--color-pink-soft);
 }
 
 .checkout-page__method input {
   margin-top: 0.15rem;
-  accent-color: var(--color-terracotta);
+  accent-color: var(--color-pink);
 }
 
 .checkout-page__method strong {
   display: block;
   font-size: 0.92rem;
   font-weight: 500;
-  color: var(--color-ink);
+  color: var(--color-cream);
 }
 
 .checkout-page__method em {
@@ -180,20 +183,20 @@
   justify-content: center;
   margin-top: 0.4rem;
   padding: 0.95rem 1.35rem;
-  border-radius: 0.45rem;
-  background: var(--color-terracotta);
-  color: #fff;
+  border-radius: 999px;
+  background: var(--color-cta);
+  color: var(--color-bg);
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  transition: background 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+  transition: background var(--transition), transform var(--transition);
 }
 
 .checkout-page__pay:hover,
 .checkout-page__cta:hover {
-  background: var(--color-terracotta-hover);
-  transform: translateY(-1px);
+  background: var(--color-cta-hover);
+  transform: scale(1.02);
 }
 
 .checkout-page__mp-hint {
@@ -203,22 +206,23 @@
   line-height: 1.45;
 }
 
-.checkout-page__mp-hint code {
-  font-size: 0.85em;
-}
-
 .checkout-page__back {
   margin-top: 0.35rem;
   color: var(--color-muted);
   font-size: 0.88rem;
   text-decoration: underline;
   text-underline-offset: 0.2em;
+  transition: color var(--transition);
+}
+
+.checkout-page__back:hover {
+  color: var(--color-pink);
 }
 
 .checkout-page__summary {
   padding: 1.25rem;
-  border-radius: 0.85rem;
-  background: rgba(255, 250, 247, 0.9);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
 }
 
@@ -226,7 +230,7 @@
   margin: 0 0 1rem;
   font-family: var(--font-display);
   font-size: 1.4rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .checkout-page__summary ul {
@@ -248,13 +252,14 @@
   width: 3.4rem;
   height: 4.3rem;
   object-fit: cover;
-  background: var(--color-cream-deep);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
 }
 
 .checkout-page__summary p {
   margin: 0;
   font-size: 0.92rem;
-  color: var(--color-ink);
+  color: var(--color-cream);
 }
 
 .checkout-page__summary span {
@@ -274,11 +279,13 @@
 .checkout-page__total strong {
   font-family: var(--font-display);
   font-size: 1.45rem;
+  color: var(--color-pink);
 }
 
 .checkout-page__empty,
 .checkout-page__success {
   padding-top: 2rem;
+  text-align: center;
 }
 
 @media (min-width: 860px) {

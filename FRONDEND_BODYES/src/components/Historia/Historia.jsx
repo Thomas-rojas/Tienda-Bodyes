@@ -1,26 +1,23 @@
+import { useScrollReveal } from '../../hooks/useScrollReveal'
+import SectionDivider from '../common/SectionDivider/SectionDivider'
 import './Historia.css'
 
 const features = [
   {
     id: 'moldeador',
-    title: 'Efecto Moldeador',
-    text: 'Tecnología que realza tu silueta de forma natural, brindando soporte sin sacrificar la comodidad.',
+    title: 'Efecto moldeador',
+    text: 'Realza tu silueta con soporte natural, sin sacrificar la comodidad que mereces.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
+        <path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         <circle cx="12" cy="12" r="3.4" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     ),
   },
   {
     id: 'tela',
-    title: 'Tela Inteligente',
-    text: 'Transpirable y suave como una segunda piel. Hecha para durar y mantener su forma uso tras uso.',
+    title: 'Tela inteligente',
+    text: 'Transpirable y suave como una segunda piel. Diseñada para durar uso tras uso.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
@@ -34,47 +31,42 @@ const features = [
   },
   {
     id: 'versatilidad',
-    title: 'Versatilidad Total',
-    text: 'De la oficina a una cena especial en segundos. La base perfecta para cualquier outfit impecable.',
+    title: 'Versatilidad total',
+    text: 'De la oficina a una cena especial. La base perfecta para cualquier outfit impecable.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 4.2 12.9 7h2.9l-2.3 1.8.9 2.9L12 10.1 9.6 11.7l.9-2.9L8.2 7h2.9L12 4.2Z"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinejoin="round"
-        />
-        <path
-          d="m6.2 13.2.6 1.8h1.8l-1.5 1.1.6 1.8-1.5-1.1-1.5 1.1.6-1.8-1.5-1.1h1.8l.6-1.8Z"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinejoin="round"
-        />
-        <path
-          d="m17.8 13.2.6 1.8h1.8l-1.5 1.1.6 1.8-1.5-1.1-1.5 1.1.6-1.8-1.5-1.1h1.8l.6-1.8Z"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinejoin="round"
-        />
+        <path d="M12 4.2 12.9 7h2.9l-2.3 1.8.9 2.9L12 10.1 9.6 11.7l.9-2.9L8.2 7h2.9L12 4.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       </svg>
     ),
   },
 ]
 
 function Historia() {
+  const [ref, visible] = useScrollReveal({ threshold: 0.1 })
+
   return (
     <section id="historia" className="historia" aria-labelledby="historia-title">
-      <div className="historia__inner">
-        <h2 id="historia-title" className="historia__title">
-          ¿POR QUÉ CLIO?
-        </h2>
+      <SectionDivider />
+      <div
+        ref={ref}
+        className={`historia__inner reveal${visible ? ' is-visible' : ''}`}
+      >
+        <header className="historia__header">
+          <p className="historia__eyebrow">Nuestra esencia</p>
+          <h2 id="historia-title" className="historia__title">
+            ¿Por qué CLIO?
+          </h2>
+          <p className="historia__lead">
+            Lencería consciente que celebra la feminidad con elegancia, suavidad y empoderamiento.
+          </p>
+        </header>
 
         <ul className="historia__grid">
-          {features.map((feature) => (
-            <li key={feature.id} className="historia__item">
+          {features.map((feature, i) => (
+            <li key={feature.id} className={`historia__item reveal-delay-${i + 1}`}>
               <div className="historia__icon">{feature.icon}</div>
-              <h3 className="historia__heading">{feature.title}</h3>
-              <p className="historia__text">{feature.text}</p>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
             </li>
           ))}
         </ul>

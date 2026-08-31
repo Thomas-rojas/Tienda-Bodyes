@@ -38,7 +38,15 @@ function Product() {
         <Navbar />
         <main className="product-page">
           <div className="product-page__inner">
-            <p>Cargando producto…</p>
+            <div className="product-page__layout">
+              <div className="product-page__skeleton skeleton" />
+              <div>
+                <div className="skeleton" style={{ height: '1rem', width: '30%', marginBottom: '1rem' }} />
+                <div className="skeleton" style={{ height: '2.5rem', width: '70%', marginBottom: '1rem' }} />
+                <div className="skeleton" style={{ height: '1rem', width: '40%', marginBottom: '2rem' }} />
+                <div className="skeleton" style={{ height: '5rem', width: '100%' }} />
+              </div>
+            </div>
           </div>
         </main>
       </>

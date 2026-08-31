@@ -24,12 +24,24 @@ function loadCart() {
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => loadCart())
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
-  const addItem = (product) => {
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [drawerOpen])
+
+  const openDrawer = () => setDrawerOpen(true)
+  const closeDrawer = () => setDrawerOpen(false)
+  const toggleDrawer = () => setDrawerOpen((open) => !open)
+
+  const addItem = (product, options = {}) => {
     setItems((current) => {
       const existing = current.find((item) => item.id === product.id)
       if (existing) {
@@ -53,6 +65,9 @@ export function CartProvider({ children }) {
         },
       ]
     })
+    if (options.openDrawer !== false) {
+      setDrawerOpen(true)
+    }
   }
 
   const removeItem = (productId) => {
@@ -92,8 +107,12 @@ export function CartProvider({ children }) {
       clearCart,
       totalItems,
       totalPrice,
+      drawerOpen,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
     }),
-    [items, totalItems, totalPrice],
+    [items, totalItems, totalPrice, drawerOpen],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

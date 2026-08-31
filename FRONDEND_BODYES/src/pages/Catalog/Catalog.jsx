@@ -2,51 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Navbar from '../../components/navbar/Navbar'
 import Final from '../../components/final/Final'
-import { useCart } from '../../context/CartContext'
+import ProductCard from '../../components/common/ProductCard/ProductCard'
 import { catalogProducts } from '../../constants/products'
 import { fetchProducts } from '../../services/api'
 import './Catalog.css'
 
-function ProductGrid({ products }) {
-  const { addItem } = useCart()
-
-  return (
-    <ul className="catalog__grid">
-      {products.map((product) => (
-        <li key={product.id} className="catalog__item">
-          <article className="catalog__card">
-            <Link className="catalog__media" to={`/producto/${product.id}`}>
-              <img src={product.image} alt={product.alt} />
-            </Link>
-            <div className="catalog__info">
-              <div>
-                <h3 className="catalog__name">{product.name}</h3>
-                <p className="catalog__price">{product.price}</p>
-                {typeof product.stock === 'number' && (
-                  <p className="catalog__stock">
-                    {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
-                  </p>
-                )}
-              </div>
-              <button
-                className="catalog__add"
-                type="button"
-                disabled={product.stock === 0}
-                onClick={() => addItem(product)}
-              >
-                Añadir a carrito
-              </button>
-            </div>
-          </article>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 function Catalog() {
   const location = useLocation()
   const [products, setProducts] = useState(catalogProducts)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -54,16 +18,16 @@ function Catalog() {
 
   useEffect(() => {
     let cancelled = false
+    setLoading(true)
     fetchProducts()
       .then((data) => {
         if (!cancelled && data?.products?.length) setProducts(data.products)
       })
-      .catch(() => {
-        /* fallback a constants */
+      .catch(() => { /* fallback */ })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
       })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [])
 
   return (
@@ -71,28 +35,41 @@ function Catalog() {
       <Navbar />
       <main className="catalog">
         <header className="catalog__hero">
-          <div className="catalog__hero-inner">
-            <p className="catalog__eyebrow">Colección completa</p>
-            <h1 className="catalog__title">Todos los bodies CLIO</h1>
-            <p className="catalog__subtitle">
-              Suavidad cruelty free con ajuste cómodo y tela inteligente. Encuentra
-              la pieza perfecta para ti.
-            </p>
-          </div>
+          <p className="page-eyebrow">Colección completa</p>
+          <h1 className="page-title">Todos los bodies CLIO</h1>
+          <p className="page-subtitle">
+            Suavidad cruelty free con ajuste cómodo y tela inteligente.
+            Encuentra la pieza perfecta para ti.
+          </p>
         </header>
 
         <section className="catalog__section" aria-labelledby="catalog-title">
           <div className="catalog__section-inner">
-            <div className="catalog__section-head">
-              <h2 id="catalog-title">Colección</h2>
-              <p>Bodies esenciales con ajuste suave y tela inteligente.</p>
-            </div>
-            <ProductGrid products={products} />
+            {loading ? (
+              <ul className="catalog__grid catalog__grid--skeleton">
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <li key={n}>
+                    <div className="catalog__skeleton skeleton" />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="catalog__grid">
+                {products.map((product, index) => (
+                  <li key={product.id}>
+                    <ProductCard
+                      product={product}
+                      badge={index === 0 ? 'new' : index === 2 ? 'bestseller' : null}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
 
         <div className="catalog__back">
-          <Link to="/">Volver al inicio</Link>
+          <Link className="btn btn--ghost" to="/">← Volver al inicio</Link>
         </div>
       </main>
       <Final />

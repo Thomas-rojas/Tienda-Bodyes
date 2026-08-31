@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
+import CartDrawer from './components/cart/CartDrawer'
 import SocialBar from './components/common/SocialBar/SocialBar'
 import Home from './pages/Home/Home'
 import Catalog from './pages/Catalog/Catalog'
@@ -20,6 +21,7 @@ function App() {
     <CartProvider>
       <BrowserRouter>
         <SocialBar />
+        <CartDrawer />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalogo" element={<Catalog />} />

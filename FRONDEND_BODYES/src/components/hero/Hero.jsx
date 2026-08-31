@@ -1,54 +1,50 @@
 import { Link } from 'react-router-dom'
+import { useScrollReveal } from '../../hooks/useScrollReveal'
 import './Hero.css'
 
 function Hero() {
+  const [contentRef, contentVisible] = useScrollReveal({ threshold: 0.2 })
+
   return (
     <section id="inicio" className="hero" aria-label="Hero CLIO">
-      <div className="hero__stage">
+      <div className="hero__bg">
         <img
           className="hero__image"
           src="/images/hero.jpg"
-          alt="Mujer con body CLIO en tonos tierra"
+          alt="Mujer con body CLIO — lencería premium"
         />
-        <div className="hero__veil" aria-hidden="true" />
-
-        <div className="hero__content">
-          <div className="hero__panel">
-            <h1 className="hero__title">
-              El Body Perfecto: Comodidad que Empodera
-            </h1>
-            <p className="hero__text">
-              Diseñados para adaptarse a tu cuerpo y a tu ritmo de vida. Descubre
-              la suavidad de nuestra tela premium que se siente como una segunda
-              piel.
-            </p>
-            <Link className="hero__cta" to="/catalogo">
-              VER COLECCIÓN
-            </Link>
-          </div>
-        </div>
+        <div className="hero__gradient" aria-hidden="true" />
       </div>
 
-      <div className="hero__benefits">
-        <div className="hero__benefit">
-          <svg width="22" height="18" viewBox="0 0 24 20" fill="none" aria-hidden="true">
-            <path
-              d="M1.5 12.5h13.2V4.2H1.5v8.3Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M14.7 8.2h4.1l2.7 3.4v.9h-6.8V8.2Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <circle cx="5.2" cy="15.8" r="1.8" stroke="currentColor" strokeWidth="1.5" />
-            <circle cx="17.8" cy="15.8" r="1.8" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-          <span>ENVÍOS GRATIS EN COMPRAS +$75</span>
+      <div
+        ref={contentRef}
+        className={`hero__content reveal${contentVisible ? ' is-visible' : ''}`}
+      >
+        <div className="hero__copy">
+          <p className="hero__eyebrow">Lencería consciente · Colombia</p>
+          <h1 className="hero__title">
+            La segunda piel que
+            <em> empodera</em>
+          </h1>
+          <p className="hero__text">
+            Bodies diseñados para abrazar tu silueta con suavidad excepcional.
+            Elegancia sensual, comodidad sin compromisos.
+          </p>
+          <div className="hero__actions">
+            <Link className="btn btn--cta btn--pulse" to="/catalogo">
+              Descubrir colección
+            </Link>
+            <a className="btn btn--ghost" href="#coleccion">
+              Ver destacados
+            </a>
+          </div>
         </div>
+        <div className="hero__visual-space" aria-hidden="true" />
+      </div>
 
+      <div className="hero__scroll" aria-hidden="true">
+        <span>Scroll</span>
+        <div className="hero__scroll-line" />
       </div>
     </section>
   )
