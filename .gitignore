@@ -21,6 +21,7 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+.netlify/
 
 # Uploads (runtime)
 BACKEND_BODYES/uploads/*
