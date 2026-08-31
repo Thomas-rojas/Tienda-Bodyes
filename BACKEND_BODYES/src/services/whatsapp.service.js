@@ -1,9 +1,8 @@
 import { env } from '../config/env.js'
-import {
-  connectWhatsAppWeb,
-  getWhatsAppWebStatus,
-  sendWhatsAppWebText,
-} from './whatsapp-web.session.js'
+
+async function loadWhatsAppWeb() {
+  return import('./whatsapp-web.session.js')
+}
 
 function digitsOnly(phone) {
   return String(phone || '').replace(/\D/g, '')
@@ -111,6 +110,36 @@ export function getOrderWhatsAppLinks(order) {
  */
 export async function sendOrderConfirmationWhatsApp(order) {
   const links = getOrderWhatsAppLinks(order)
+
+  if (process.env.DISABLE_WHATSAPP_WEB === 'true') {
+    return {
+      ok: false,
+      mode: 'wa_web',
+      simulated: true,
+      detail: 'WhatsApp Web desactivado en este entorno',
+      ...links,
+      customer: false,
+      store: false,
+    }
+  }
+
+  let session
+  try {
+    session = await loadWhatsAppWeb()
+  } catch (err) {
+    console.warn('[whatsapp] Módulo WhatsApp Web no disponible:', err.message)
+    return {
+      ok: false,
+      mode: 'wa_web',
+      simulated: true,
+      detail: err.message,
+      ...links,
+      customer: false,
+      store: false,
+    }
+  }
+
+  const { connectWhatsAppWeb, getWhatsAppWebStatus, sendWhatsAppWebText } = session
   const status = getWhatsAppWebStatus()
   const customerPhone = toWaMePhone(order.customer?.phone)
   const storePhone = env.whatsapp.storePhone
