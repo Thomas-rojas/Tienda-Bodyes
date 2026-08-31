@@ -1,10 +1,9 @@
 # Despliegue del frontend CLIO (Vite + React)
-# Conecta este repo en Netlify; el backend va aparte (Render/Railway/etc.).
+# Repo monorepo: frontend en FRONDEND_BODYES (typo histórico, no usar FRONTEND_BODYES).
 
 [build]
-  base = "FRONDEND_BODYES"
-  command = "npm ci && npm run build"
-  publish = "dist"
+  command = "npm ci --prefix FRONDEND_BODYES && npm run build --prefix FRONDEND_BODYES"
+  publish = "FRONDEND_BODYES/dist"
 
 [build.environment]
   NODE_VERSION = "20"
