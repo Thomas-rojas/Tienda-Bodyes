@@ -1,106 +1,42 @@
 .payment-status {
   min-height: calc(100svh - var(--nav-height));
-  background:
-    radial-gradient(circle at 12% 0%, rgba(247, 198, 217, 0.08), transparent 42%),
-    var(--color-bg);
-  padding: 3rem 0 4rem;
+  background: var(--color-surface);
+  padding: 3rem 0 5rem;
 }
 
 .payment-status__inner {
   max-width: 640px;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 1.5rem;
   text-align: center;
 }
 
 .payment-status__eyebrow {
   margin: 0;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
+  font-size: 0.6875rem;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--color-pink);
-}
-
-.payment-status__eyebrow--ok {
-  color: #7ec9a0;
-}
-
-.payment-status__eyebrow--bad {
-  color: var(--color-cta);
+  color: var(--color-muted);
 }
 
 .payment-status h1 {
-  margin: 0.55rem 0 0;
+  margin: 0.5rem 0 0;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.6rem);
-  font-weight: 500;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 400;
 }
 
 .payment-status p {
   margin: 0.85rem 0 0;
-  color: var(--color-cream-muted);
+  color: var(--color-muted);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 .payment-status__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.85rem 1.25rem;
-  align-items: center;
+  gap: 0.85rem;
   justify-content: center;
   margin-top: 1.75rem;
-}
-
-.payment-status__actions--stack {
-  flex-direction: column;
-  align-items: stretch;
-  max-width: 22rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.payment-status__cta,
-.payment-status__link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.875rem 1.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  transition: transform var(--transition), background var(--transition);
-}
-
-.payment-status__cta {
-  background: var(--color-cta);
-  color: var(--color-bg);
-}
-
-.payment-status__cta:hover {
-  background: var(--color-cta-hover);
-  transform: scale(1.02);
-}
-
-.payment-status__link {
-  color: var(--color-muted);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.payment-status__link:hover {
-  color: var(--color-pink);
-}
-
-.payment-status__ref {
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  color: var(--color-muted);
-}
-
-.payment-status__ref code {
-  color: var(--color-pink);
 }

@@ -1,17 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   createAdminProduct,
   deleteAdminProduct,
+  duplicateAdminProduct,
+  fetchAdminCollections,
   fetchAdminProducts,
   updateAdminProduct,
   uploadAdminProductImage,
 } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 import AdminShell from './AdminShell'
 import './Admin.css'
+
+const LOW_STOCK = 5
 
 const EMPTY_NEW = {
   name: '',
   pricePesos: '',
+  compareAtPesos: '',
   stock: '10',
   description: '',
   color: '',
@@ -19,15 +25,19 @@ const EMPTY_NEW = {
   fit: '',
   size: 'Talla única',
   category: 'mujeres',
+  coleccion: '',
   active: true,
+  featured: false,
 }
 
 function emptyDraft(product) {
   return {
     name: product.name || '',
     pricePesos: product.pricePesos ?? Math.round((product.priceCents || 0) / 100),
+    compareAtPesos: product.compareAtPesos ?? '',
     stock: product.stock ?? 0,
     active: product.active !== false,
+    featured: product.featured === true,
     image: product.image || '',
     imagePath: product.imagePath || '',
     description: product.description || '',
@@ -36,11 +46,21 @@ function emptyDraft(product) {
     fit: product.fit || '',
     size: product.size || 'Talla única',
     category: product.category || 'mujeres',
+    coleccion: product.coleccion || '',
   }
 }
 
+function stockBadge(stock, active) {
+  if (active === false) return { label: 'Oculto', className: 'admin-badge--muted' }
+  if (stock <= 0) return { label: 'Agotado', className: 'admin-badge--danger' }
+  if (stock <= LOW_STOCK) return { label: 'Stock bajo', className: 'admin-badge--warn' }
+  return { label: 'Disponible', className: 'admin-badge--ok' }
+}
+
 function AdminProducts() {
+  const { pushToast } = useToast()
   const [products, setProducts] = useState([])
+  const [collections, setCollections] = useState([])
   const [drafts, setDrafts] = useState({})
   const [newProduct, setNewProduct] = useState(EMPTY_NEW)
   const [newFile, setNewFile] = useState(null)
@@ -51,16 +71,22 @@ function AdminProducts() {
   const [uploadingId, setUploadingId] = useState('')
   const [creating, setCreating] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
-  const [message, setMessage] = useState('')
+  const [search, setSearch] = useState('')
+  const [filterCollection, setFilterCollection] = useState('')
+  const [filterStock, setFilterStock] = useState('')
   const [error, setError] = useState('')
 
   const load = async () => {
     setLoading(true)
     setError('')
     try {
-      const data = await fetchAdminProducts()
-      const list = data.products || []
+      const [productsData, collectionsData] = await Promise.all([
+        fetchAdminProducts(),
+        fetchAdminCollections(),
+      ])
+      const list = productsData.products || []
       setProducts(list)
+      setCollections(collectionsData.collections || [])
       const next = {}
       list.forEach((product) => {
         next[product.id] = emptyDraft(product)
@@ -87,6 +113,23 @@ function AdminProducts() {
     return () => URL.revokeObjectURL(url)
   }, [newFile])
 
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (!showHidden && product.active === false) return false
+      if (search && !String(product.name).toLowerCase().includes(search.toLowerCase())) {
+        return false
+      }
+      if (filterCollection && product.coleccion !== filterCollection) return false
+      if (filterStock === 'low' && (product.stock > LOW_STOCK || product.stock <= 0)) {
+        return false
+      }
+      if (filterStock === 'out' && product.stock > 0) return false
+      if (filterStock === 'active' && product.active === false) return false
+      if (filterStock === 'inactive' && product.active !== false) return false
+      return true
+    })
+  }, [products, showHidden, search, filterCollection, filterStock])
+
   const onChange = (id, field, value) => {
     setDrafts((current) => ({
       ...current,
@@ -98,10 +141,25 @@ function AdminProducts() {
     setNewProduct((current) => ({ ...current, [field]: value }))
   }
 
+  const productPayload = (draft) => ({
+    name: draft.name,
+    pricePesos: Number(draft.pricePesos),
+    compareAtPesos: draft.compareAtPesos === '' ? null : Number(draft.compareAtPesos),
+    stock: Number(draft.stock),
+    active: Boolean(draft.active),
+    featured: Boolean(draft.featured),
+    description: draft.description,
+    color: draft.color,
+    material: draft.material,
+    fit: draft.fit,
+    size: draft.size,
+    category: draft.category,
+    coleccion: draft.coleccion || null,
+  })
+
   const onPickImage = async (id, file) => {
     if (!file) return
     setUploadingId(id)
-    setMessage('')
     setError('')
     try {
       const data = await uploadAdminProductImage(id, file)
@@ -112,7 +170,7 @@ function AdminProducts() {
         ...current,
         [id]: emptyDraft(data.product),
       }))
-      setMessage(`Foto actualizada: ${data.product.name}`)
+      pushToast('Foto actualizada')
     } catch (err) {
       setError(err.message || 'No se pudo subir la foto')
     } finally {
@@ -120,23 +178,9 @@ function AdminProducts() {
     }
   }
 
-  const productPayload = (draft) => ({
-    name: draft.name,
-    pricePesos: Number(draft.pricePesos),
-    stock: Number(draft.stock),
-    active: Boolean(draft.active),
-    description: draft.description,
-    color: draft.color,
-    material: draft.material,
-    fit: draft.fit,
-    size: draft.size,
-    category: draft.category,
-  })
-
   const onCreate = async (event) => {
     event.preventDefault()
     setCreating(true)
-    setMessage('')
     setError('')
     try {
       const data = await createAdminProduct(productPayload(newProduct), newFile)
@@ -151,7 +195,7 @@ function AdminProducts() {
       }))
       setNewProduct(EMPTY_NEW)
       setNewFile(null)
-      setMessage(`Producto creado: ${data.product.name}`)
+      pushToast(`Producto creado: ${data.product.name}`)
     } catch (err) {
       setError(err.message || 'No se pudo crear el producto')
     } finally {
@@ -159,12 +203,11 @@ function AdminProducts() {
     }
   }
 
-  const onSave = async (id) => {
+  const onSave = async (id, partial) => {
     setSavingId(id)
-    setMessage('')
     setError('')
     try {
-      const draft = drafts[id]
+      const draft = partial ? { ...drafts[id], ...partial } : drafts[id]
       const data = await updateAdminProduct(id, productPayload(draft))
       setProducts((current) =>
         current.map((product) => (product.id === id ? data.product : product)),
@@ -173,7 +216,7 @@ function AdminProducts() {
         ...current,
         [id]: emptyDraft(data.product),
       }))
-      setMessage(`Guardado: ${data.product.name}`)
+      pushToast('Cambios guardados correctamente')
     } catch (err) {
       setError(err.message || 'No se pudo guardar')
     } finally {
@@ -181,14 +224,36 @@ function AdminProducts() {
     }
   }
 
+  const onInlineSave = async (id, field, rawValue) => {
+    const value = field === 'pricePesos' || field === 'stock' ? Number(rawValue) : rawValue
+    onChange(id, field, rawValue)
+    await onSave(id, { [field]: value })
+  }
+
+  const onDuplicate = async (product) => {
+    setSavingId(product.id)
+    try {
+      const data = await duplicateAdminProduct(product.id)
+      setProducts((current) => [...current, data.product])
+      setDrafts((current) => ({
+        ...current,
+        [data.product.id]: emptyDraft(data.product),
+      }))
+      pushToast(`Copia creada: ${data.product.name}`)
+    } catch (err) {
+      setError(err.message || 'No se pudo duplicar')
+    } finally {
+      setSavingId('')
+    }
+  }
+
   const onDelete = async (product) => {
     const ok = window.confirm(
-      `¿Eliminar “${product.name}”? Si ya tuvo ventas, se ocultará de la tienda.`,
+      `¿Estás seguro de eliminar “${product.name}”? Esta acción no se puede deshacer.`,
     )
     if (!ok) return
 
     setDeletingId(product.id)
-    setMessage('')
     setError('')
     try {
       const data = await deleteAdminProduct(product.id)
@@ -198,10 +263,10 @@ function AdminProducts() {
         delete next[product.id]
         return next
       })
-      setMessage(
+      pushToast(
         data.softDeleted
-          ? `“${product.name}” tenía ventas: se ocultó de la tienda y salió del panel.`
-          : `Eliminado: ${product.name}`,
+          ? `“${product.name}” tenía ventas: se ocultó de la tienda.`
+          : 'Producto eliminado',
       )
     } catch (err) {
       setError(err.message || 'No se pudo eliminar')
@@ -209,6 +274,12 @@ function AdminProducts() {
       setDeletingId('')
     }
   }
+
+  const collectionOptions = collections.map((col) => (
+    <option key={col.slug} value={col.slug}>
+      {col.name}
+    </option>
+  ))
 
   const renderFields = (draft, id, { isNew = false } = {}) => (
     <>
@@ -241,6 +312,21 @@ function AdminProducts() {
           />
         </label>
         <label>
+          Precio antes (oferta)
+          <input
+            type="number"
+            min="0"
+            step="1000"
+            placeholder="Opcional"
+            value={draft.compareAtPesos}
+            onChange={(e) =>
+              isNew
+                ? onNewChange('compareAtPesos', e.target.value)
+                : onChange(id, 'compareAtPesos', e.target.value)
+            }
+          />
+        </label>
+        <label>
           Stock
           <input
             type="number"
@@ -257,6 +343,20 @@ function AdminProducts() {
         </label>
       </div>
       <div className="admin-card__row">
+        <label>
+          Colección
+          <select
+            value={draft.coleccion}
+            onChange={(e) =>
+              isNew
+                ? onNewChange('coleccion', e.target.value)
+                : onChange(id, 'coleccion', e.target.value)
+            }
+          >
+            <option value="">Sin colección</option>
+            {collectionOptions}
+          </select>
+        </label>
         <label>
           Color
           <input
@@ -359,26 +459,119 @@ function AdminProducts() {
         />
         Visible en la tienda
       </label>
+      <label className="admin-card__check">
+        <input
+          type="checkbox"
+          checked={draft.featured}
+          onChange={(e) =>
+            isNew
+              ? onNewChange('featured', e.target.checked)
+              : onChange(id, 'featured', e.target.checked)
+          }
+        />
+        Destacado en home
+      </label>
     </>
   )
 
   return (
-    <AdminShell title="Colección">
+    <AdminShell title="Productos">
       <p className="admin__lead">
-        Añade productos nuevos o edita la colección: precio, stock, foto, color,
-        material y más.
+        Gestiona bodys, precios, stock, colecciones e imágenes. Los cambios se reflejan
+        en la tienda al guardar.
       </p>
-      {message && <p className="admin__ok">{message}</p>}
       {error && <p className="admin__error">{error}</p>}
 
-      <label className="admin-card__check admin-products__filter">
+      <div className="admin-toolbar">
         <input
-          type="checkbox"
-          checked={showHidden}
-          onChange={(e) => setShowHidden(e.target.checked)}
+          type="search"
+          placeholder="Buscar por nombre…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
-        Mostrar productos ocultos
-      </label>
+        <select
+          value={filterCollection}
+          onChange={(e) => setFilterCollection(e.target.value)}
+        >
+          <option value="">Todas las colecciones</option>
+          {collectionOptions}
+        </select>
+        <select value={filterStock} onChange={(e) => setFilterStock(e.target.value)}>
+          <option value="">Todos los estados</option>
+          <option value="low">Stock bajo</option>
+          <option value="out">Agotados</option>
+          <option value="active">Solo activos</option>
+          <option value="inactive">Solo inactivos</option>
+        </select>
+        <label className="admin-card__check">
+          <input
+            type="checkbox"
+            checked={showHidden}
+            onChange={(e) => setShowHidden(e.target.checked)}
+          />
+          Mostrar ocultos
+        </label>
+      </div>
+
+      {!loading && filteredProducts.length > 0 && (
+        <div className="admin-panel admin-table-wrap">
+          <h2>Edición rápida</h2>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.map((product) => {
+                const draft = drafts[product.id] || emptyDraft(product)
+                const badge = stockBadge(Number(draft.stock), draft.active)
+                return (
+                  <tr key={`quick-${product.id}`}>
+                    <td>{product.name}</td>
+                    <td>
+                      <input
+                        className="admin-table__inline"
+                        type="number"
+                        min="1000"
+                        step="1000"
+                        defaultValue={draft.pricePesos}
+                        disabled={savingId === product.id}
+                        onBlur={(e) => {
+                          if (String(e.target.value) !== String(draft.pricePesos)) {
+                            onInlineSave(product.id, 'pricePesos', e.target.value)
+                          }
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="admin-table__inline"
+                        type="number"
+                        min="0"
+                        step="1"
+                        defaultValue={draft.stock}
+                        disabled={savingId === product.id}
+                        onBlur={(e) => {
+                          if (String(e.target.value) !== String(draft.stock)) {
+                            onInlineSave(product.id, 'stock', e.target.value)
+                          }
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <span className={`admin-badge ${badge.className}`}>{badge.label}</span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <form className="admin-card admin-card--new" onSubmit={onCreate}>
         <div className="admin-card__media">
@@ -398,13 +591,14 @@ function AdminProducts() {
       </form>
 
       {loading ? (
-        <p>Cargando colección…</p>
+        <p>Cargando productos…</p>
+      ) : filteredProducts.length === 0 ? (
+        <p>No hay productos con esos filtros.</p>
       ) : (
         <div className="admin-products">
-          {products
-            .filter((product) => showHidden || product.active !== false)
-            .map((product) => {
+          {filteredProducts.map((product) => {
             const draft = drafts[product.id] || emptyDraft(product)
+            const badge = stockBadge(Number(draft.stock), draft.active)
             return (
               <article key={product.id} className="admin-card">
                 <div className="admin-card__media">
@@ -412,6 +606,7 @@ function AdminProducts() {
                     src={draft.image || product.image}
                     alt={product.alt || product.name}
                   />
+                  <span className={`admin-badge ${badge.className}`}>{badge.label}</span>
                 </div>
                 <div className="admin-card__fields">
                   {renderFields(draft, product.id)}
@@ -422,6 +617,14 @@ function AdminProducts() {
                       disabled={savingId === product.id || deletingId === product.id}
                     >
                       {savingId === product.id ? 'Guardando…' : 'Guardar'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--outline"
+                      onClick={() => onDuplicate(product)}
+                      disabled={savingId === product.id || deletingId === product.id}
+                    >
+                      Duplicar
                     </button>
                     <button
                       type="button"

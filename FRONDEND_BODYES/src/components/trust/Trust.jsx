@@ -1,5 +1,4 @@
 import { useScrollReveal } from '../../hooks/useScrollReveal'
-import SectionDivider from '../common/SectionDivider/SectionDivider'
 import './Trust.css'
 
 const items = [
@@ -61,7 +60,6 @@ function Trust() {
 
   return (
     <section className="trust" aria-label="Confianza CLIO">
-      <SectionDivider />
       <div
         ref={ref}
         className={`trust__inner reveal${visible ? ' is-visible' : ''}`}

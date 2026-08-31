@@ -114,15 +114,15 @@ function Product() {
 
               <div className="product-page__actions">
                 <button
-                  className="product-page__add"
+                  className="btn btn--primary"
                   type="button"
                   disabled={outOfStock}
                   onClick={() => addItem(product)}
                 >
-                  Añadir a carrito
+                  Añadir al carrito
                 </button>
                 <button
-                  className="product-page__pay"
+                  className="btn btn--outline"
                   type="button"
                   disabled={outOfStock}
                   onClick={() => {
@@ -130,7 +130,7 @@ function Product() {
                     navigate('/pagar')
                   }}
                 >
-                  Ir a pagar
+                  Comprar ahora
                 </button>
               </div>
 

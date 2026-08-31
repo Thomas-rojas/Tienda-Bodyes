@@ -1,49 +1,42 @@
 .coleccion {
-  padding: 3rem 0 4rem;
+  padding: 5rem 0 6rem;
+  background: var(--color-surface);
 }
 
 .coleccion__inner {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 1.5rem;
 }
 
 .coleccion__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  text-align: center;
+  margin-bottom: 3.5rem;
 }
 
-.coleccion__eyebrow {
-  margin: 0 0 0.5rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+.coleccion__header .section-title {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.coleccion__link {
+  font-size: 0.6875rem;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--color-pink);
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--color-border-dark);
+  padding-bottom: 2px;
+  transition: color var(--transition), border-color var(--transition);
 }
 
-.coleccion__title {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 500;
-}
-
-.coleccion__subtitle {
-  margin: 0;
-  max-width: 28rem;
-  color: var(--color-cream-muted);
-  font-size: 0.9rem;
+.coleccion__link:hover {
+  color: var(--color-pink-strong);
+  border-color: var(--color-pink-strong);
 }
 
 .coleccion__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem 1.25rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -51,7 +44,14 @@
 
 @media (min-width: 768px) {
   .coleccion__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 1.5rem;
+  }
+}
+
+@media (min-width: 1100px) {
+  .coleccion__grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    gap: 3rem 1.75rem;
   }
 }

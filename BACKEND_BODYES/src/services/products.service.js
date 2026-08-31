@@ -206,6 +206,11 @@ export async function createProduct(input = {}) {
     slug: `${slugBase}-${Date.now().toString(36)}`,
     name,
     category: String(input.category || 'mujeres').trim() || 'mujeres',
+    coleccion: input.coleccion ? String(input.coleccion).trim() : null,
+    compare_at_cents: input.compareAtPesos
+      ? Math.round(Number(input.compareAtPesos)) * 100
+      : null,
+    featured: input.featured === true || input.featured === 'true',
     price_cents: Math.round(pesos) * 100,
     stock,
     image_path: imagePath,
@@ -298,6 +303,19 @@ export async function updateProduct(id, patch) {
   if (patch.category !== undefined) {
     updates.category = String(patch.category || '').trim() || 'mujeres'
   }
+  if (patch.coleccion !== undefined) {
+    updates.coleccion = patch.coleccion ? String(patch.coleccion).trim() : null
+  }
+  if (patch.compareAtPesos !== undefined) {
+    const compare =
+      patch.compareAtPesos === '' || patch.compareAtPesos === null
+        ? null
+        : Math.round(Number(patch.compareAtPesos)) * 100
+    updates.compare_at_cents = compare
+  }
+  if (patch.featured !== undefined) {
+    updates.featured = Boolean(patch.featured)
+  }
 
   if (Object.keys(updates).length === 0) {
     throw new AppError('No hay campos para actualizar', 400)
@@ -369,6 +387,31 @@ export async function deleteProduct(id) {
   }
   if (!data) throw new AppError('Producto no encontrado', 404)
   return { id: productId, softDeleted: false }
+}
+
+export async function duplicateProduct(id) {
+  const productId = String(id || '')
+  const products = await listProductsAdmin()
+  const source = products.find((product) => product.id === productId)
+  if (!source) throw new AppError('Producto no encontrado', 404)
+
+  return createProduct({
+    name: `${source.name} (copia)`,
+    pricePesos: source.pricePesos,
+    compareAtPesos: source.compareAtPesos,
+    stock: source.stock,
+    description: source.description,
+    color: source.color,
+    material: source.material,
+    fit: source.fit,
+    size: source.size,
+    category: source.category,
+    coleccion: source.coleccion,
+    featured: source.featured,
+    imagePath: source.imagePath || source.image,
+    alt: source.alt,
+    active: source.active !== false,
+  })
 }
 
 export { getMemoryStore, tablesReady }

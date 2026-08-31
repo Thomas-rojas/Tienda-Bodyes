@@ -1,0 +1,62 @@
+.account-menu {
+  position: relative;
+}
+
+.account-menu__panel {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  z-index: 120;
+  min-width: 12rem;
+  padding: 0.5rem 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 12px 40px rgba(17, 17, 17, 0.08);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 250ms var(--ease), transform 250ms var(--ease), visibility 250ms;
+}
+
+.account-menu.is-open .account-menu__panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.account-menu__panel a,
+.account-menu__panel button {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  font-size: 0.6875rem;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--color-ink-soft);
+  transition: color var(--transition), background var(--transition);
+}
+
+.account-menu__panel a:hover,
+.account-menu__panel button:hover {
+  color: var(--color-pink-strong);
+  background: rgba(245, 184, 196, 0.12);
+}
+
+.navbar.is-overlay:not(.is-scrolled) .account-menu__panel {
+  background: rgba(17, 17, 17, 0.92);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.navbar.is-overlay:not(.is-scrolled) .account-menu__panel a,
+.navbar.is-overlay:not(.is-scrolled) .account-menu__panel button {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.account-menu__login {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: inherit;
+}

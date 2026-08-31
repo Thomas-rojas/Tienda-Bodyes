@@ -10,7 +10,9 @@ import productsRoutes from './routes/products.routes.js'
 import checkoutRoutes from './routes/checkout.routes.js'
 import paymentsRoutes from './routes/payments.routes.js'
 import ordersRoutes from './routes/orders.routes.js'
+import storeRoutes from './routes/store.routes.js'
 import authRoutes from './routes/auth.routes.js'
+import accountRoutes from './routes/account.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 
 const app = express()
@@ -80,7 +82,9 @@ app.use('/api/products', productsRoutes)
 app.use('/api/checkout', checkoutRoutes)
 app.use('/api/payments', paymentsRoutes)
 app.use('/api/orders', ordersRoutes)
+app.use('/api/store', storeRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/account', accountRoutes)
 app.use('/api/admin', adminRoutes)
 
 app.use(errorHandler)

@@ -63,6 +63,7 @@ export async function createPendingOrder({ customer, items }) {
       payment_method_type: null,
       notifications_sent: false,
       fulfilled: false,
+      fulfillment_status: 'pendiente',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -392,6 +393,128 @@ export async function listOrders({ status = 'paid' } = {}) {
   return orders.map((order) => serializeOrder(order, byOrderId.get(order.id) || []))
 }
 
+export async function listOrdersByDocument(documentNumber) {
+  const doc = String(documentNumber || '').trim()
+  if (!doc) return []
+
+  const ready = await tablesReady()
+
+  if (!ready) {
+    const store = getMemoryStore()
+    const orders = [...store.orders.values()]
+      .filter((order) => String(order.document_number) === doc)
+      .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    return orders.map((order) => {
+      const items = store.orderItems.get(order.reference) || []
+      return serializeOrder(order, items)
+    })
+  }
+
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('document_number', doc)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new AppError(error.message, 502)
+  if (!orders?.length) return []
+
+  const ids = orders.map((order) => order.id)
+  const { data: items, error: itemsError } = await supabase
+    .from('order_items')
+    .select('*')
+    .in('order_id', ids)
+
+  if (itemsError) throw new AppError(itemsError.message, 502)
+
+  const byOrderId = new Map()
+  for (const item of items || []) {
+    const list = byOrderId.get(item.order_id) || []
+    list.push(item)
+    byOrderId.set(item.order_id, list)
+  }
+
+  return orders.map((order) => serializeOrder(order, byOrderId.get(order.id) || []))
+}
+
+const FULFILLMENT_STATUSES = ['pendiente', 'en_proceso', 'enviado', 'entregado', 'cancelado']
+
+export async function updateOrderFulfillment(orderId, payload = {}) {
+  const status = String(payload.fulfillmentStatus || payload.status || '').trim()
+  const trackingNumber = payload.trackingNumber
+  const adminNotes = payload.adminNotes
+
+  if (status && !FULFILLMENT_STATUSES.includes(status)) {
+    throw new AppError('Estado logístico inválido', 400)
+  }
+
+  const updates = {}
+  if (status) updates.fulfillment_status = status
+  if (trackingNumber !== undefined) updates.tracking_number = String(trackingNumber || '').trim()
+  if (adminNotes !== undefined) updates.admin_notes = String(adminNotes || '').trim()
+
+  if (Object.keys(updates).length === 0) {
+    throw new AppError('No hay cambios para guardar', 400)
+  }
+
+  const ready = await tablesReady()
+
+  if (!ready) {
+    const store = getMemoryStore()
+    const order = [...store.orders.values()].find((row) => row.id === orderId)
+    if (!order) throw new AppError('Pedido no encontrado', 404)
+    Object.assign(order, updates)
+    order.updated_at = new Date().toISOString()
+    const items = store.orderItems.get(order.reference) || []
+    return serializeOrder(order, items)
+  }
+
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', orderId)
+    .select('*')
+    .single()
+
+  if (error) throw new AppError(error.message, 502)
+  if (!data) throw new AppError('Pedido no encontrado', 404)
+
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('*')
+    .eq('order_id', data.id)
+
+  return serializeOrder(data, items || [])
+}
+
+export function ordersToCsv(orders) {
+  const header = [
+    'referencia',
+    'fecha',
+    'cliente',
+    'email',
+    'telefono',
+    'estado_pago',
+    'estado_envio',
+    'total_cop',
+    'tracking',
+  ]
+  const rows = orders.map((order) => [
+    order.reference,
+    order.createdAt,
+    order.customer?.name,
+    order.customer?.email,
+    order.customer?.phone,
+    order.status,
+    order.fulfillmentStatus,
+    order.amountPesos,
+    order.trackingNumber || '',
+  ])
+  return [header, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+}
+
 function serializeOrder(order, items) {
   const pesos = Math.round(order.amount_cents / 100)
   const mapped = {
@@ -416,6 +539,9 @@ function serializeOrder(order, items) {
     wompiTransactionId: order.wompi_transaction_id,
     notificationsSent: order.notifications_sent,
     fulfilled: order.fulfilled,
+    fulfillmentStatus: order.fulfillment_status || 'pendiente',
+    trackingNumber: order.tracking_number || '',
+    adminNotes: order.admin_notes || '',
     createdAt: order.created_at,
     items: items.map((item) => {
       const unitPesos = Math.round(item.unit_price_cents / 100)

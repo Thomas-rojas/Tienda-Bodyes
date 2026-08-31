@@ -1,47 +1,67 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useCart } from '../../../context/CartContext'
+import { formatCop } from '../../../constants/products'
 import './ProductCard.css'
 
-function ProductCard({ product, badge }) {
-  const { addItem } = useCart()
-  const [adding, setAdding] = useState(false)
-  const outOfStock = product.stock === 0
+const HOVER_IMAGES = {
+  m1: '/images/catalog-mujer-2.jpg',
+  m2: '/images/catalog-mujer-3.jpg',
+  m3: '/images/catalog-mujer-4.jpg',
+  m4: '/images/catalog-mujer-1.jpg',
+  m5: '/images/catalog-mujer-2.jpg',
+  n1: '/images/catalog-nina-2.jpg',
+  n2: '/images/catalog-nina-3.jpg',
+  n3: '/images/catalog-nina-4.jpg',
+  n4: '/images/catalog-nina-1.jpg',
+}
 
-  const handleAdd = () => {
-    if (outOfStock) return
-    setAdding(true)
-    addItem(product)
-    setTimeout(() => setAdding(false), 600)
-  }
+function ProductCard({ product, isNew = false }) {
+  const hoverSrc = product.imageHover || HOVER_IMAGES[product.id] || product.image
+  const outOfStock = product.stock === 0
+  const hasSale =
+    typeof product.pricePesos === 'number' &&
+    typeof product.compareAtPesos === 'number' &&
+    product.compareAtPesos > product.pricePesos
 
   return (
-    <article className="product-card">
+    <article className={`product-card${outOfStock ? ' is-sold-out' : ''}`}>
       <Link className="product-card__media" to={`/producto/${product.id}`}>
-        {badge && <span className={`product-card__badge product-card__badge--${badge}`}>{badge === 'new' ? 'Nuevo' : 'Más vendido'}</span>}
-        <img src={product.image} alt={product.alt || product.name} loading="lazy" />
-        <div className="product-card__overlay" aria-hidden="true" />
+        <img
+          className="product-card__img product-card__img--primary"
+          src={product.image}
+          alt={product.alt || product.name}
+          loading="lazy"
+        />
+        <img
+          className="product-card__img product-card__img--hover"
+          src={hoverSrc}
+          alt=""
+          loading="lazy"
+          aria-hidden="true"
+        />
       </Link>
-      <div className="product-card__body">
+      <div className="product-card__info">
+        {(isNew || product.isNew) && (
+          <span className="product-card__tag">Nuevo</span>
+        )}
         <Link className="product-card__name" to={`/producto/${product.id}`}>
-          {product.name}
+          <span className="product-card__name-text">{product.name}</span>
+          <span className="product-card__name-line" aria-hidden="true" />
         </Link>
-        <p className="product-card__price">{product.price}</p>
-        <button
-          className={`product-card__add${adding ? ' is-adding' : ''}`}
-          type="button"
-          disabled={outOfStock}
-          onClick={handleAdd}
-        >
-          <span className="product-card__add-text">
-            {outOfStock ? 'Agotado' : adding ? 'Añadido ✓' : 'Agregar al carrito'}
-          </span>
-          {!outOfStock && (
-            <svg className="product-card__add-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6h15l-1.5 9H7.5L6 6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-            </svg>
+        <div className="product-card__prices">
+          {hasSale ? (
+            <>
+              <span className="product-card__price product-card__price--was">
+                {formatCop(product.compareAtPesos)}
+              </span>
+              <span className="product-card__price product-card__price--sale">
+                {product.price}
+              </span>
+            </>
+          ) : (
+            <span className="product-card__price">{product.price}</span>
           )}
-        </button>
+        </div>
+        {outOfStock && <p className="product-card__status">Agotado</p>}
       </div>
     </article>
   )

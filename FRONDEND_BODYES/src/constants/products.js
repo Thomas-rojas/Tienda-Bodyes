@@ -11,6 +11,7 @@ export const catalogProducts = [
   {
     id: 'm1',
     category: 'mujeres',
+    coleccion: 'esenciales',
     name: 'Clio Básico Essential Nude',
     priceCents: 14000000,
     pricePesos: 140000,
@@ -28,6 +29,7 @@ export const catalogProducts = [
   {
     id: 'm2',
     category: 'mujeres',
+    coleccion: 'esenciales',
     name: 'Clio Básico Terracota Soft',
     priceCents: 16800000,
     pricePesos: 168000,
@@ -45,6 +47,7 @@ export const catalogProducts = [
   {
     id: 'm3',
     category: 'mujeres',
+    coleccion: 'rib',
     name: 'Clio Básico Rib Verde',
     priceCents: 12800000,
     pricePesos: 128000,
@@ -62,6 +65,7 @@ export const catalogProducts = [
   {
     id: 'm4',
     category: 'mujeres',
+    coleccion: 'cuello-alto',
     name: 'Clio Básico Cuello Alto',
     priceCents: 18000000,
     pricePesos: 180000,
@@ -79,6 +83,7 @@ export const catalogProducts = [
   {
     id: 'm5',
     category: 'mujeres',
+    coleccion: 'esenciales',
     name: 'Clio Básico Essential',
     priceCents: 14000000,
     pricePesos: 140000,
@@ -96,6 +101,7 @@ export const catalogProducts = [
   {
     id: 'm6',
     category: 'mujeres',
+    coleccion: 'encaje',
     name: 'Clio Básico Encaje Elegance',
     priceCents: 19200000,
     pricePesos: 192000,
@@ -113,6 +119,7 @@ export const catalogProducts = [
   {
     id: 'm7',
     category: 'mujeres',
+    coleccion: 'rib',
     name: 'Clio Básico Rib Confort',
     priceCents: 12800000,
     pricePesos: 128000,
@@ -130,6 +137,7 @@ export const catalogProducts = [
   {
     id: 'm8',
     category: 'mujeres',
+    coleccion: 'cuello-alto',
     name: 'Clio Básico Cuello Alto Chic',
     priceCents: 16800000,
     pricePesos: 168000,
@@ -145,13 +153,6 @@ export const catalogProducts = [
     stock: 20,
   },
 ]
-
-export const featuredProducts = [
-  catalogProducts.find((p) => p.id === 'm5'),
-  catalogProducts.find((p) => p.id === 'm6'),
-  catalogProducts.find((p) => p.id === 'm7'),
-  catalogProducts.find((p) => p.id === 'm8'),
-].filter(Boolean)
 
 export const mujeresProducts = catalogProducts
 

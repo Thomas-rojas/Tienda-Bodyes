@@ -81,10 +81,10 @@ function Cart() {
                   <strong>{formatCop(totalPrice)}</strong>
                 </div>
                 <div className="cart-page__summary-actions">
-                  <Link className="cart-page__pay" to="/pagar">
+                  <Link className="btn btn--primary cart-page__pay" to="/pagar">
                     Pagar
                   </Link>
-                  <Link className="cart-page__cta" to="/catalogo">
+                  <Link className="btn btn--outline" to="/catalogo">
                     Seguir comprando
                   </Link>
                   <button

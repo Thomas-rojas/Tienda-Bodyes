@@ -1,32 +1,51 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { clearAdminToken } from '../../services/adminAuth'
+import { useAuth } from '../../context/AuthContext'
 import './Admin.css'
+
+const NAV = [
+  { to: '/admin/dashboard', label: 'Dashboard' },
+  { to: '/admin/productos', label: 'Productos' },
+  { to: '/admin/colecciones', label: 'Colecciones' },
+  { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/admin/clientes', label: 'Clientes' },
+  { to: '/admin/contenido', label: 'Contenido' },
+  { to: '/admin/cupones', label: 'Cupones' },
+  { to: '/admin/configuracion', label: 'Configuración' },
+  { to: '/admin/usuarios', label: 'Usuarios' },
+]
 
 function AdminShell({ title, children }) {
   const navigate = useNavigate()
+  const { logout } = useAuth()
 
-  const logout = () => {
-    clearAdminToken()
-    navigate('/admin')
+  const handleLogout = () => {
+    logout()
+    navigate('/')
   }
 
   return (
-    <div className="admin">
-      <header className="admin__top">
-        <div className="admin__brand">
-          <p className="admin__eyebrow">CLIO</p>
-          <h1>{title}</h1>
-        </div>
-        <nav className="admin__nav">
-          <Link to="/admin/productos">Colección</Link>
-          <Link to="/admin/ventas">Ventas</Link>
-          <Link to="/">Tienda</Link>
-          <button type="button" onClick={logout}>
-            Salir
-          </button>
+    <div className="admin-layout">
+      <aside className="admin-sidebar">
+        <Link className="admin-sidebar__brand" to="/admin/dashboard">
+          CLIO
+          <span>Panel de control</span>
+        </Link>
+        <nav className="admin-sidebar__nav">
+          {NAV.map((item) => (
+            <Link key={item.to} to={item.to}>{item.label}</Link>
+          ))}
         </nav>
-      </header>
-      <main className="admin__main">{children}</main>
+        <div className="admin-sidebar__footer">
+          <Link to="/">Ver tienda</Link>
+          <button type="button" onClick={handleLogout}>Cerrar sesión</button>
+        </div>
+      </aside>
+      <div className="admin-layout__main">
+        <header className="admin-layout__header">
+          <h1>{title}</h1>
+        </header>
+        <main className="admin-layout__content">{children}</main>
+      </div>
     </div>
   )
 }

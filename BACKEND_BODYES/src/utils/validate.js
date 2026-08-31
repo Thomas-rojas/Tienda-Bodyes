@@ -97,10 +97,18 @@ export function mapProductRow(row, { includeActive = false } = {}) {
     id: row.id,
     slug: row.slug,
     category: row.category,
+    coleccion: row.coleccion || null,
     name: row.name,
     priceCents: row.price_cents,
     pricePesos: pesos,
     price: formatCop(pesos),
+    compareAtCents: row.compare_at_cents || null,
+    compareAtPesos: row.compare_at_cents
+      ? Math.round(Number(row.compare_at_cents) / 100)
+      : null,
+    compareAtPrice: row.compare_at_cents
+      ? formatCop(Math.round(Number(row.compare_at_cents) / 100))
+      : null,
     stock: row.stock,
     image: resolveImageUrl(row.image_path),
     imagePath: row.image_path,
@@ -110,6 +118,7 @@ export function mapProductRow(row, { includeActive = false } = {}) {
     fit: row.fit,
     size: row.size,
     description: row.description,
+    featured: row.featured === true,
   }
   if (includeActive) mapped.active = row.active !== false
   return mapped

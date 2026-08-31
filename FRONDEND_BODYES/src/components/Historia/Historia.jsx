@@ -1,5 +1,4 @@
 import { useScrollReveal } from '../../hooks/useScrollReveal'
-import SectionDivider from '../common/SectionDivider/SectionDivider'
 import './Historia.css'
 
 const features = [
@@ -45,8 +44,7 @@ function Historia() {
   const [ref, visible] = useScrollReveal({ threshold: 0.1 })
 
   return (
-    <section id="historia" className="historia" aria-labelledby="historia-title">
-      <SectionDivider />
+    <section id="historia" className="historia section--dark" aria-labelledby="historia-title">
       <div
         ref={ref}
         className={`historia__inner reveal${visible ? ' is-visible' : ''}`}

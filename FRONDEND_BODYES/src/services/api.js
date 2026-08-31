@@ -26,8 +26,12 @@ async function request(path, options = {}) {
   return data
 }
 
-function adminRequest(path, options = {}) {
-  const token = localStorage.getItem('clio_admin_token') || ''
+function getStoredToken() {
+  return localStorage.getItem('clio_auth_token') || localStorage.getItem('clio_admin_token') || ''
+}
+
+function authRequest(path, options = {}) {
+  const token = getStoredToken()
   return request(path, {
     ...options,
     headers: {
@@ -92,6 +96,41 @@ export function simulatePayment(
   })
 }
 
+export function login(identificacion, password) {
+  const loginId = String(identificacion || '').trim()
+  const body = loginId.includes('@')
+    ? { email: loginId.toLowerCase(), password }
+    : { identificacion: loginId, password }
+
+  return request('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function register(payload) {
+  return request('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function fetchMe() {
+  return authRequest('/api/auth/me')
+}
+
+export function updateProfile(patch) {
+  return authRequest('/api/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
+export function fetchMyOrders() {
+  return authRequest('/api/account/orders')
+}
+
+/** @deprecated Usar login() con identificación */
 export function adminLogin(email, password) {
   return request('/api/auth/login', {
     method: 'POST',
@@ -99,25 +138,40 @@ export function adminLogin(email, password) {
   })
 }
 
+export function fetchAdminDashboard(days = 30) {
+  return authRequest(`/api/admin/dashboard?days=${days}`)
+}
+
+export function fetchAdminUsers() {
+  return authRequest('/api/admin/users')
+}
+
+export function updateAdminUserRole(id, role) {
+  return authRequest(`/api/admin/users/${encodeURIComponent(id)}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  })
+}
+
 export function fetchAdminProducts() {
-  return adminRequest('/api/admin/products')
+  return authRequest('/api/admin/products')
 }
 
 export function updateAdminProduct(id, patch) {
-  return adminRequest(`/api/admin/products/${encodeURIComponent(id)}`, {
+  return authRequest(`/api/admin/products/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: JSON.stringify(patch),
   })
 }
 
 export function deleteAdminProduct(id) {
-  return adminRequest(`/api/admin/products/${encodeURIComponent(id)}`, {
+  return authRequest(`/api/admin/products/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
 }
 
 export async function createAdminProduct(fields, file) {
-  const token = localStorage.getItem('clio_admin_token') || ''
+  const token = getStoredToken()
   const formData = new FormData()
 
   Object.entries(fields || {}).forEach(([key, value]) => {
@@ -147,7 +201,7 @@ export async function createAdminProduct(fields, file) {
 }
 
 export async function uploadAdminProductImage(id, file) {
-  const token = localStorage.getItem('clio_admin_token') || ''
+  const token = getStoredToken()
   const formData = new FormData()
   formData.append('image', file)
 
@@ -177,7 +231,132 @@ export async function uploadAdminProductImage(id, file) {
 export function fetchAdminOrders(status = 'paid') {
   const params = new URLSearchParams()
   if (status) params.set('status', status)
-  return adminRequest(`/api/admin/orders?${params.toString()}`)
+  return authRequest(`/api/admin/orders?${params.toString()}`)
+}
+
+export function updateAdminOrderFulfillment(id, payload) {
+  return authRequest(`/api/admin/orders/${encodeURIComponent(id)}/fulfillment`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function exportAdminOrdersCsv() {
+  const token = getStoredToken()
+  return fetch(`${API_URL}/api/admin/orders/export/csv`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+}
+
+export function duplicateAdminProduct(id) {
+  return authRequest(`/api/admin/products/${encodeURIComponent(id)}/duplicate`, {
+    method: 'POST',
+  })
+}
+
+export function fetchStoreContent() {
+  return request('/api/store/content')
+}
+
+export function fetchStoreCollections({ featured = false } = {}) {
+  const params = new URLSearchParams()
+  if (featured) params.set('featured', 'true')
+  const query = params.toString()
+  return request(`/api/store/collections${query ? `?${query}` : ''}`)
+}
+
+export function fetchAdminCollections() {
+  return authRequest('/api/admin/collections?all=true')
+}
+
+export function createAdminCollection(fields, file) {
+  const token = getStoredToken()
+  const formData = new FormData()
+  Object.entries(fields || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    formData.append(key, String(value))
+  })
+  if (file) formData.append('image', file)
+  return fetch(`${API_URL}/api/admin/collections`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  }).then(async (response) => {
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || 'Error al crear colección')
+    return data
+  })
+}
+
+export function updateAdminCollection(id, fields, file) {
+  const token = getStoredToken()
+  const formData = new FormData()
+  Object.entries(fields || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    formData.append(key, String(value))
+  })
+  if (file) formData.append('image', file)
+  return fetch(`${API_URL}/api/admin/collections/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  }).then(async (response) => {
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || 'Error al guardar colección')
+    return data
+  })
+}
+
+export function deleteAdminCollection(id) {
+  return authRequest(`/api/admin/collections/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+export function fetchAdminContent() {
+  return authRequest('/api/admin/content')
+}
+
+export function updateAdminContent(key, value) {
+  return authRequest('/api/admin/content', {
+    method: 'PATCH',
+    body: JSON.stringify({ key, value }),
+  })
+}
+
+export function fetchAdminCustomers() {
+  return authRequest('/api/admin/customers')
+}
+
+export function fetchAdminCoupons() {
+  return authRequest('/api/admin/coupons')
+}
+
+export function createAdminCoupon(payload) {
+  return authRequest('/api/admin/coupons', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function updateAdminCoupon(id, payload) {
+  return authRequest(`/api/admin/coupons/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteAdminCoupon(id) {
+  return authRequest(`/api/admin/coupons/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+export function subscribeNewsletter(email) {
+  return request('/api/store/newsletter', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
 }
 
 export { API_URL }

@@ -1,0 +1,5 @@
+# Coloca aquí el video del hero:
+# - hero-bodys.mp4  (requerido)
+# - hero-bodys.webm  (opcional, mejor compresión)
+#
+# Rutas configuradas en: src/constants/hero.js

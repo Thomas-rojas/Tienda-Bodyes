@@ -7,6 +7,7 @@ import {
   connectWhatsAppWeb,
 } from './services/whatsapp-web.session.js'
 import { verifyMercadoPagoCredentials } from './services/mercadopago.service.js'
+import { seedAdminIfEmpty } from './services/users.service.js'
 import { env } from './config/env.js'
 
 const PORT = process.env.PORT || 4000
@@ -27,6 +28,16 @@ async function start() {
     console.info(
       `[mercadopago] Checkout API · entorno=${env.mercadoPago.env} · pk…${mp.publicKeySuffix || 'missing'}`,
     )
+  }
+
+  const seeded = await seedAdminIfEmpty({
+    email: env.admin.email,
+    password: env.admin.documentNumber,
+    name: 'Administrador CLIO',
+    documentNumber: env.admin.documentNumber,
+  })
+  if (seeded) {
+    console.info('[auth] Admin inicial creado en base de datos (rol admin).')
   }
 
   app.listen(PORT, () => {

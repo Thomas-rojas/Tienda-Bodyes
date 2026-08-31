@@ -49,5 +49,6 @@ export const env = {
   admin: {
     email: (process.env.ADMIN_EMAIL || 'admin@clio.com').toLowerCase().trim(),
     password: process.env.ADMIN_PASSWORD || 'clioadmin123',
+    documentNumber: String(process.env.ADMIN_DOCUMENT_NUMBER || '1000000001').trim(),
   },
 }

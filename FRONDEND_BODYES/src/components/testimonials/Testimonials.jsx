@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
-import SectionDivider from '../common/SectionDivider/SectionDivider'
 import './Testimonials.css'
 
 const testimonials = [
@@ -42,7 +41,6 @@ function Testimonials() {
 
   return (
     <section className="testimonials" aria-label="Testimonios">
-      <SectionDivider />
       <div
         ref={ref}
         className={`testimonials__inner reveal${visible ? ' is-visible' : ''}`}
